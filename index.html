@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Road GPS-VTS Annexure Manager</title>
+<meta name="theme-color" content="#1A5CBA">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GPS-VTS">
+<meta name="description" content="GPS-VTS road works annexure manager: roller passes and material quantity monitoring">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --sign:#1A5CBA; --sign-2:#0E4698; --sign-ink:#FFFFFF; --stone:#F2A33A;
+  --bg:#F9FAFB; --surface:#FFFFFF; --ink:#1F2937; --muted:#6B7280; --line:#E5E7EB; --line-2:#F1F3F6;
+  --input:#FFF6C7; --input-line:#DCC86E; --select:#FFE3C7; --select-line:#E2AC75; --calc:#F3F5F8;
+  --ok:#1C7343; --ok-soft:#DCF0E3; --bad:#B42318; --bad-soft:#FBE4E1; --warn:#8A5A00; --warn-soft:#FCEFD3;
+  --info-soft:#E3EEF9; --focus:#2E6BE6;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sign:#2F6FD6; --sign-2:#1A5CBA; --bg:#0E1422; --surface:#151D2E; --ink:#E5EAF3; --muted:#9BA7C0;
+    --line:#2A3448; --line-2:#212A3B; --input:#3A3315; --input-line:#6E6024; --select:#3D2918; --select-line:#7C5432;
+    --calc:#1B2436; --ok:#62C98F; --ok-soft:#163826; --bad:#F2887D; --bad-soft:#3E1C19; --warn:#E9B957; --warn-soft:#3A2D12;
+    --info-soft:#1A2A3A; --focus:#7EA6FF;
+  }
+}
+:root[data-theme="dark"]{
+  --sign:#2F6FD6; --sign-2:#1A5CBA; --bg:#0E1422; --surface:#151D2E; --ink:#E5EAF3; --muted:#9BA7C0;
+  --line:#2A3448; --line-2:#212A3B; --input:#3A3315; --input-line:#6E6024; --select:#3D2918; --select-line:#7C5432;
+  --calc:#1B2436; --ok:#62C98F; --ok-soft:#163826; --bad:#F2887D; --bad-soft:#3E1C19; --warn:#E9B957; --warn-soft:#3A2D12;
+  --info-soft:#1A2A3A; --focus:#7EA6FF;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;font-size:14.5px;line-height:1.45;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:264px minmax(0,1fr);min-height:100vh}
+.side{background:linear-gradient(90deg,#1E5FBF 0%,#0E4698 100%);color:var(--sign-ink);padding:0 0 14px;display:flex;flex-direction:column;gap:10px;position:sticky;top:0;height:100vh;overflow:auto;overflow-x:hidden}
+.brand{display:flex;align-items:center;gap:12px;padding:18px 18px 16px;border-bottom:1px solid rgba(255,255,255,.28);min-height:74px}
+.logo{width:40px;height:40px;flex:none;display:grid;place-items:center}
+.logo svg{width:36px;height:36px}
+.bt b{display:block;font-size:18px;font-weight:700;line-height:1.15;letter-spacing:.01em}
+.bt span{display:block;font-size:11.5px;opacity:.82;margin-top:2px;line-height:1.3}
+.nav{display:flex;flex-direction:column;gap:3px;padding:6px 12px 0}
+.nav a{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:9px;text-decoration:none;font-weight:500;color:rgba(255,255,255,.88);white-space:nowrap}
+.nav a:hover{background:rgba(255,255,255,.10);color:#fff}
+.nav a.on{background:rgba(255,255,255,.18);color:#fff;font-weight:600}
+.nav svg{width:22px;height:22px;flex:none;stroke-width:1.6}
+.nav .grp{font-size:11.5px;opacity:.65;padding:14px 12px 4px;font-weight:500}
+.side-foot{margin-top:auto;padding:0 12px;display:flex;flex-direction:column;gap:10px}
+.rail-btn{display:flex;align-items:center;gap:12px;width:100%;background:transparent;border:0;color:rgba(255,255,255,.88);padding:10px 12px;border-radius:9px;cursor:pointer;font-weight:500;white-space:nowrap}
+.rail-btn:hover{background:rgba(255,255,255,.10);color:#fff}
+.rail-btn svg{width:22px;height:22px;flex:none;transition:transform .2s}
+.mode{font-size:12px;line-height:1.35;background:rgba(0,0,0,.14);border-radius:9px;padding:10px 11px}
+.mode b{display:block;font-weight:600;margin-bottom:2px}
+.mode .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#8fe3b0}
+.mode.local .dot{background:var(--stone)}
+.app{transition:grid-template-columns .2s}
+.app.rail{grid-template-columns:76px minmax(0,1fr)}
+.app.rail .bt,.app.rail .nav .t,.app.rail .nav .grp,.app.rail .rail-btn .t,.app.rail .mode{display:none}
+.app.rail .brand{justify-content:center;padding:18px 0 16px}
+.app.rail .nav{padding:10px 12px 0;gap:8px}
+.app.rail .nav a,.app.rail .rail-btn{justify-content:center;padding:11px 0}
+.app.rail .rail-btn svg{transform:rotate(180deg)}
+main{padding:26px 34px 72px;min-width:0}
+.wrap{max-width:1380px;margin:0 auto}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:20px}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:4px}
+.crumbs a{color:var(--muted);text-decoration:none}
+.crumbs a:hover{text-decoration:underline}
+h1{font-size:27px;line-height:1.15;font-weight:800;margin:0;letter-spacing:-.005em}
+h2{font-size:18px;font-weight:800;margin:0}
+h3{font-size:15.5px;font-weight:700;margin:0}
+.sub{color:var(--muted);margin:4px 0 0;max-width:72ch}
+.row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.spacer{flex:1}
+
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:7px 13px;font-weight:600;cursor:pointer;line-height:1.3;white-space:nowrap;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--sign);border-color:var(--sign);color:#fff}
+.btn.primary:hover{background:var(--sign-2)}
+.btn.danger{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,var(--line))}
+.btn.danger.solid{background:var(--bad);color:#fff;border-color:var(--bad)}
+.btn.ghost{border-color:transparent;background:transparent;padding:5px 8px}
+.btn.ghost:hover{background:var(--line-2)}
+.btn.sm{padding:4px 9px;font-size:13.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.icon-btn{border:1px solid transparent;background:transparent;border-radius:6px;width:28px;height:28px;display:inline-grid;place-items:center;cursor:pointer;color:var(--muted)}
+.icon-btn:hover{background:var(--line-2);color:var(--ink)}
+.icon-btn.del:hover{color:var(--bad)}
+.icon-btn:disabled{opacity:.3;cursor:not-allowed}
+.icon-btn svg{width:16px;height:16px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}
+.panel-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 16px;border-bottom:1px solid var(--line)}
+.panel-h .sub{margin:0;font-size:13.5px}
+.panel-b{padding:16px}
+.panel-b.flush{padding:0}
+
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px 16px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.wide{grid-column:span 2}
+.fld label,.lbl{font-size:13px;font-weight:700;color:var(--muted)}
+.fld .req{color:var(--bad);margin-left:2px}
+.ctl{position:relative;display:flex;align-items:center}
+.ctl .unit{position:absolute;right:9px;font-size:12.5px;color:var(--muted);pointer-events:none}
+.in,.sel,.txt{width:100%;border-radius:6px;padding:7px 9px;min-height:36px;border:1px solid var(--line);background:var(--surface)}
+.in{background:var(--input);border-color:var(--input-line)}
+.in.has-unit{padding-right:34px}
+.sel{background:var(--select);border-color:var(--select-line);appearance:auto}
+.txt{background:var(--surface)}
+.in[readonly],.sel:disabled,.txt[readonly]{background:var(--calc);border-color:var(--line-2);color:var(--ink);opacity:1}
+.in.bad,.sel.bad,.txt.bad{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad)}
+.err{font-size:12.5px;color:var(--bad);font-weight:600;min-height:0}
+.err:empty{display:none}
+.hint{font-size:12.5px;color:var(--muted)}
+.linkish{background:none;border:0;padding:0;color:var(--sign);font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+:root[data-theme="dark"] .linkish{color:#93B4FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .linkish{color:#93B4FF}}
+
+.tbl-wrap{overflow-x:auto}
+table.grid{border-collapse:separate;border-spacing:0;width:100%;font-size:14px}
+.grid th{font-size:12.5px;font-weight:700;color:var(--muted);text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:bottom;line-height:1.3;background:var(--surface)}
+.grid td{padding:7px 8px;border-bottom:1px solid var(--line-2);vertical-align:top}
+.grid tr:last-child td{border-bottom:0}
+.grid td.num,.grid th.num{text-align:right}
+.grid td.c{background:var(--calc)}
+.grid th.calc-h{background:var(--calc)}
+.res{display:flex;flex-direction:column;gap:5px;min-width:210px}
+.res-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--line-2);gap:2px}
+.res-bar .ok{background:var(--ok)}.res-bar .bad{background:var(--bad)}.res-bar .pend{background:var(--warn);opacity:.6}
+.res-pills{display:flex;flex-wrap:wrap;gap:4px}
+.grid th{position:relative}
+.col-rz{position:absolute;top:0;right:-3px;bottom:0;width:8px;cursor:col-resize;z-index:2;touch-action:none}
+.col-rz::after{content:"";position:absolute;top:22%;bottom:22%;left:3px;width:2px;border-radius:1px;background:var(--line)}
+.col-rz:hover::after,.col-rz.on::after{background:var(--sign);top:0;bottom:0}
+body.resizing{cursor:col-resize;user-select:none}
+.pass-in{display:flex;align-items:center;gap:4px}.pass-in .in{min-width:0;width:100%;text-align:center;padding-left:4px;padding-right:4px}.pass-in span{color:var(--muted)}
+textarea.small-in{font-size:12.5px;line-height:1.35;resize:none;overflow:hidden;min-height:34px;padding-top:7px;padding-bottom:7px;display:block}
+.grid td.small{font-size:12.5px;line-height:1.35}
+.grid td.ro-cell{padding-top:10px}
+.a1-combined th{font-size:12px;line-height:1.3;vertical-align:bottom;padding:8px 6px}
+.a1-combined td{padding:6px;vertical-align:top}
+.a1-combined td.idx{padding-top:14px;text-align:center;color:var(--muted)}
+.a1-combined .grp-row th{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--sign);text-align:center;padding:7px 6px;border-bottom:1px solid var(--line);border-left:2px solid var(--surface)}
+.a1-combined .grp-row th.grp:not(:empty){background:color-mix(in srgb,var(--sign) 7%,var(--surface))}
+.a1-combined td.c{padding-top:13px}
+.a1-combined td.c.small{padding-top:9px}
+.a1-combined td.num .in,.a1-combined input[inputmode="decimal"]{text-align:right}
+.a1-combined .pass-in input[inputmode="decimal"]{text-align:center}
+.a1-combined .sel{padding-right:4px}
+.a1-combined tbody tr:hover td{background:color-mix(in srgb,var(--sign) 3%,transparent)}
+.a1-combined tbody tr:hover td.c{background:var(--calc)}
+.a1-combined td .cell-sub{display:block;margin-top:3px}
+.a1-combined td.acts{padding-top:9px}
+.a1-combined td.acts .icon-btn{width:24px;height:26px}
+/* centred report tables */
+.a1-combined th,.a1-combined td,.grid.ctr th,.grid.ctr td{text-align:center!important;vertical-align:middle!important}
+.a1-combined td,.a1-combined td.c,.a1-combined td.c.small,.a1-combined td.idx,.a1-combined td.acts,.a1-combined td.ro-cell{padding:8px 6px}
+.a1-combined .in,.a1-combined input[inputmode="decimal"],.grid.ctr .in{text-align:center!important}
+.a1-combined .sel,.grid.ctr .sel{text-align:center;text-align-last:center}
+.a1-combined .pass-in{justify-content:center}
+.a1-combined .pass-in .in{max-width:52px}
+.a1-combined td .cell-sub{text-align:center}
+.a1-combined .pill,.grid.ctr .pill{justify-content:center}
+.a1-combined td.acts{white-space:nowrap}
+.a1-combined .sel{padding-left:7px}
+.grid td.c{vertical-align:top;padding-top:12px}
+.view .in,.view .sel,.view .txt{background:transparent!important;border-color:transparent!important;box-shadow:none!important;padding-left:0;appearance:none;-webkit-appearance:none;cursor:default}
+.view .ctl .unit{position:static;margin-left:4px}
+.view .ctl{justify-content:flex-start}
+.grid td.idx{color:var(--muted);font-weight:700;width:30px;padding-top:15px}
+.grid .in,.grid .sel,.grid .txt{min-height:34px;padding:6px 8px}
+.grid tbody tr.clickable{cursor:pointer}
+.grid tbody tr.clickable:hover td{background:var(--line-2)}
+.grid td.acts{white-space:nowrap;text-align:right;width:1%}
+.grid .unit-h{font-weight:400}
+.cell-main{font-weight:700}
+.cell-sub{font-size:12.5px;color:var(--muted)}
+.pending{color:var(--warn);font-size:13px;font-weight:600}
+.big-num{font-size:16px;font-weight:800}
+
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 10px 1px;font-size:12.5px;font-weight:700;white-space:nowrap;border:1px solid transparent}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.pill.draft{background:var(--warn-soft);color:var(--warn)}
+.pill.final{background:var(--ok-soft);color:var(--ok)}
+.pill.arch{background:var(--line-2);color:var(--muted);border-color:var(--line)}
+.pill.plain{background:var(--line-2);color:var(--muted)}
+
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1px solid}
+.legend .y{background:var(--input);border-color:var(--input-line)}
+.legend .o{background:var(--select);border-color:var(--select-line)}
+.legend .g{background:var(--calc);border-color:var(--line)}
+
+.banner{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-radius:8px;margin-bottom:16px;font-size:14px}
+.banner.info{background:var(--info-soft)}
+.banner.warn{background:var(--warn-soft);color:var(--ink)}
+.banner.ok{background:var(--ok-soft)}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:18px;overflow:hidden}
+.stat{padding:14px 18px;border-right:1px solid var(--line-2)}
+.stat:last-child{border-right:0}
+.stat .k{font-size:13px;color:var(--muted);font-weight:600}
+.stat .v{font-size:24px;font-weight:800;line-height:1.2;margin-top:2px}
+.stat .d{font-size:12.5px;color:var(--muted)}
+
+.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.quick a{display:flex;gap:14px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-decoration:none}
+.quick a:hover{border-color:var(--sign)}
+.quick .ico{width:44px;height:44px;border-radius:8px;background:var(--sign);display:grid;place-items:center;flex:none;color:#fff;font-weight:800;font-size:15px}
+.quick .ico.ii{background:var(--stone);color:#3a2300}
+.quick b{display:block;font-size:15.5px}
+.quick span{font-size:13.5px;color:var(--muted)}
+
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;padding:12px 16px;border-bottom:1px solid var(--line)}
+.filters .fld{min-width:150px}
+.filters .fld.grow{flex:1;min-width:220px}
+
+.empty{padding:38px 20px;text-align:center;color:var(--muted)}
+.empty h3{color:var(--ink);margin-bottom:6px}
+.empty p{margin:0 auto 14px;max-width:52ch}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+.tabs a{padding:9px 14px;text-decoration:none;font-weight:700;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs a.on{color:var(--ink);border-bottom-color:var(--sign)}
+
+.xsec{display:block;width:100%;height:auto}
+.xsec .band{stroke-width:1.5}
+.xsec .band.ok{fill:var(--ok-soft);stroke:var(--ok)}
+.xsec .band.bad{fill:var(--bad-soft);stroke:var(--bad)}
+.xsec .band.pend{fill:var(--calc);stroke:var(--muted);stroke-dasharray:5 4}
+.xsec text{fill:var(--ink);font-family:inherit}
+.xsec .lab{font-size:13px;font-weight:700}
+.xsec .lab2{font-size:12px;fill:var(--muted)}
+.xsec .st-ok{fill:var(--ok);font-weight:800;font-size:12px}
+.xsec .st-bad{fill:var(--bad);font-weight:800;font-size:12px}
+.xsec .st-pend{fill:var(--warn);font-weight:800;font-size:12px}
+.xsec .ground{stroke:var(--muted);stroke-width:1}
+.xsec .dim{stroke:var(--muted);stroke-width:1}
+.xsec .cl{stroke:var(--muted);stroke-dasharray:2 4}
+
+.mat{border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:16px}
+.mat-h{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--line-2);border-radius:10px 10px 0 0}
+.mat-h .no{width:28px;height:28px;border-radius:50%;background:var(--sign);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13.5px;flex:none}
+.mat-b{padding:14px}
+.mat-f{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;padding:10px 14px;border-top:1px solid var(--line);background:var(--calc);border-radius:0 0 10px 10px}
+.kv{display:flex;flex-direction:column}
+.kv .k{font-size:12.5px;color:var(--muted);font-weight:600}
+.kv .v{font-size:17px;font-weight:800}
+
+.bars{display:flex;flex-direction:column;gap:12px}
+.bar-row{display:grid;grid-template-columns:minmax(140px,220px) 1fr 80px;gap:12px;align-items:center}
+.bar{height:16px;background:var(--line-2);border-radius:4px;position:relative;overflow:hidden;border:1px solid var(--line)}
+.bar > span{position:absolute;left:0;top:0;bottom:0;background:var(--sign);border-radius:3px 0 0 3px}
+.bar > span.low{background:var(--stone)}
+.bar-row .pct{font-weight:800;text-align:right}
+
+.hist{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 18px}
+.formula{font-size:13px;color:var(--muted);line-height:1.6}
+.formula code{font-family:inherit;font-weight:700;color:var(--ink);background:var(--calc);padding:1px 6px;border-radius:4px}
+
+.scrim{position:fixed;inset:0;background:rgba(10,15,30,.45);display:grid;place-items:center;padding:20px;z-index:50}
+.dlg{background:var(--surface);color:var(--ink);border-radius:12px;width:min(620px,100%);max-height:calc(100% - 20px);overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);border:1px solid var(--line)}
+.dlg.small{width:min(440px,100%)}
+.dlg-h{padding:16px 20px 0}
+.dlg-b{padding:14px 20px}
+.dlg-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px 18px}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+.loading{padding:60px 0;text-align:center;color:var(--muted)}
+.check{display:flex;align-items:center;gap:8px;font-weight:600}
+.check input{width:16px;height:16px}
+.sticky-actions{position:sticky;bottom:0;z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(4px);border-top:1px solid var(--line);margin:0 -34px;padding:10px 34px calc(10px + env(safe-area-inset-bottom,0px))}
+.dirty-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--stone);margin-right:6px}
+
+.out-sheet{overflow:hidden}
+.out-band{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;padding:14px 18px;background:linear-gradient(90deg,#1E5FBF,#0E4698);color:#fff}
+.out-band span{font-size:12px;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.05em}
+.out-band b{font-size:16px;font-weight:600}
+.out-info{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.oi{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:3px;min-width:0}
+.oi .k{font-size:12px;color:var(--muted);font-weight:600}
+.oi .v{font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.out-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:16px 0}
+.kpi{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;background:var(--surface)}
+.kpi .n{font-size:24px;font-weight:800;line-height:1.15}
+.kpi .l{font-size:12.5px;color:var(--muted);font-weight:600}
+.kpi.ok{background:var(--ok-soft);border-color:transparent}.kpi.ok .n,.kpi.ok .l{color:var(--ok)}
+.kpi.bad{background:var(--bad-soft);border-color:transparent}.kpi.bad .n,.kpi.bad .l{color:var(--bad)}
+.kpi.warn{background:var(--warn-soft);border-color:transparent}.kpi.warn .n,.kpi.warn .l{color:var(--warn)}
+.out-sec{font-size:13px;letter-spacing:.04em;color:var(--sign);margin:6px 0 10px}
+.out-tbl{border:1px solid var(--line);border-radius:10px;border-collapse:separate;overflow:hidden}
+.out-tbl th{background:var(--calc)}
+.out-tbl td .cell-sub{display:block}
+.nav .ts{display:none}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.chart-card{margin:0;border:1px solid var(--line);border-radius:10px;padding:14px 14px 8px;background:var(--surface);break-inside:avoid}
+.chart-card figcaption{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.chart-card figcaption b{font-size:14.5px}
+.chart-card figcaption span{font-size:12.5px;color:var(--muted)}
+.chart{display:block;width:100%;height:auto;font-family:inherit}
+.chart .ch-s1{fill:#5B9BD5}
+.chart .ch-s1.below{fill:#5B9BD5;opacity:.75}
+.chart .ch-s2{fill:#ED7D31}
+.chart .ch-grid{stroke:var(--line);stroke-width:1}
+.chart .ch-axis{stroke:var(--muted);stroke-width:1}
+.chart .ch-ref{stroke:var(--bad);stroke-width:1.5;stroke-dasharray:5 4}
+.chart .ch-reflab{font-size:10.5px;fill:var(--bad);font-weight:600}
+.chart .ch-tick{font-size:11px;fill:var(--muted)}
+.chart .ch-cat{font-size:11.5px;fill:var(--ink);font-weight:600}
+.chart .ch-val{font-size:10.5px;fill:var(--ink)}
+.chart .ch-val.strong{font-size:12px;font-weight:700}
+.chart .ch-leg{font-size:11.5px;fill:var(--ink)}
+.chart .ch-axlabel{font-size:12px;fill:var(--muted);font-weight:600}
+@media (max-width:640px){
+  .grid.resp thead{display:none}
+  .grid.resp,.grid.resp tbody,.grid.resp tr{display:block;width:100%}
+  .grid.resp tr{border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:4px 12px;background:var(--surface)}
+  .tbl-wrap > .grid.resp{padding:10px;border:0}
+  .grid.resp td{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border:0!important;padding:7px 0!important;text-align:right!important;background:transparent!important;border-bottom:1px solid var(--line-2)!important}
+  .grid.resp td:last-child{border-bottom:0!important}
+  .grid.resp td::before{content:attr(data-label);font-size:12px;font-weight:600;color:var(--muted);text-align:left;flex:none;max-width:45%}
+  .grid.resp td[data-label=""]::before{content:none}
+  .grid.resp td > *{text-align:right}
+  .grid.resp td{width:100%!important;min-width:0!important}
+  .grid.resp td.acts{justify-content:flex-end;gap:6px;flex-wrap:wrap;white-space:normal}
+  .grid.resp td > div,.grid.resp td > span{min-width:0}
+  .grid.resp td .res{min-width:0;align-items:flex-end}
+  .grid.resp td .res-pills{justify-content:flex-end}
+  .out-info{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .filters .fld{min-width:0;flex:1 1 140px}
+  h1{font-size:22px}
+  .top{margin-bottom:14px}
+  .panel-h{padding:12px 14px}
+  .top > .row{width:100%}
+  .top > .row .btn{flex:1 1 auto;justify-content:center}
+}
+@media (max-width:860px){
+  .app{grid-template-columns:1fr}
+  .side{position:sticky;top:0;z-index:20;height:auto;flex-direction:row;align-items:center;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;margin-top:calc(-1 * env(safe-area-inset-top,0px));gap:12px;overflow:visible;background:linear-gradient(90deg,#1E5FBF,#0E4698)}
+  .app.rail{grid-template-columns:1fr}
+  .brand{padding:4px 6px;border:0;min-height:0;flex:none}
+  .bt span{display:none}.bt b{font-size:15px}
+  .app.rail .bt,.app.rail .nav .t{display:block}
+  .nav{position:fixed;left:0;right:0;bottom:0;z-index:30;flex-direction:row;justify-content:space-around;gap:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));background:linear-gradient(90deg,#1E5FBF,#0E4698);box-shadow:0 -4px 16px rgba(0,0,0,.12)}
+  .nav .grp{display:none}
+  .nav a{flex:1 1 0;flex-direction:column;gap:3px;padding:6px 2px;font-size:11px;justify-content:center;text-align:center;border-radius:8px;min-width:0}
+  .nav a .t,.app.rail .nav .t{display:none}
+  .nav a .ts{display:block;white-space:nowrap}
+  .nav a.on{background:rgba(255,255,255,.2)}
+  .nav svg{width:22px;height:22px}
+  .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+  .side-foot{display:none}
+  .mode{display:none}
+  main{padding:16px 12px calc(96px + env(safe-area-inset-bottom,0px))}
+  .sticky-actions{margin:0 -12px;padding:10px 12px;bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  .sticky-actions .hint{display:none}
+  .out-info{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(2){border-right:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line-2)}
+  .quick{grid-template-columns:1fr}
+  .fld.wide{grid-column:auto}
+  .bar-row{grid-template-columns:1fr 64px}.bar-row .bar{grid-column:1 / -1;order:3}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+@media print{
+  .side,.nav,.no-print,.sticky-actions,.icon-btn,.btn,.filters,.toast,.col-rz{display:none!important}
+  .out-band{background:#fff!important;color:#000!important;border-bottom:2px solid #000}
+  .app{display:block}
+  main{padding:0}
+  body{background:#fff;color:#000;font-size:12px}
+  .panel,.mat{border-color:#999;break-inside:avoid}
+  .in,.sel,.txt{border:0;background:transparent!important;box-shadow:none;padding:0;min-height:0;appearance:none}
+  .grid td.c{background:#f2f2f2}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" aria-label="Main navigation">
+    <div class="brand" title="GPS-VTS Road works annexure manager"><span class="logo" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="M15 4h10l9 32H6z" fill="#fff"/><path d="M20 9v4M20 18v5M20 28v5" stroke="#1A5CBA" stroke-width="2.4" stroke-linecap="round"/></svg></span><span class="bt"><b>GPS-VTS</b><span>Road works annexure manager</span></span></div>
+    <nav class="nav" id="nav">
+      <a href="#/" data-nav="dash" title="Dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-8 9 8"/><path d="M5 10v10h14V10"/></svg><span class="t">Dashboard</span><span class="ts">Home</span></a>
+      <a href="#/roads" data-nav="roads" title="Roads"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3L4 21M16 3l4 18M12 5v2M12 11v2M12 17v2"/></svg><span class="t">Roads</span><span class="ts">Roads</span></a>
+      <div class="grp">Reports</div>
+      <a href="#/a1" data-nav="a1" title="Annexure I: Roller passes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="13" height="8" rx="2"/><circle cx="19" cy="12" r="3"/><path d="M6 16v3M13 16v3"/></svg><span class="t">Annexure I: Roller passes</span><span class="ts">Annex. I</span></a>
+      <a href="#/a2" data-nav="a2" title="Annexure II: Material qty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 15h13V7H2zM15 10h4l3 3v2h-7"/><circle cx="6" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></svg><span class="t">Annexure II: Material qty</span><span class="ts">Annex. II</span></a>
+      <div class="grp">Settings</div>
+      <a href="#/settings" data-nav="settings" title="Layers &amp; materials"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="7" cy="18" r="2" fill="currentColor"/></svg><span class="t">Layers &amp; materials</span><span class="ts">Settings</span></a>
+    </nav>
+    <div class="side-foot">
+      <div class="mode" id="mode"><b><span class="dot"></span>Connecting</b>Checking where data is stored</div>
+      <button class="rail-btn" id="rail-btn" type="button" aria-expanded="true" title="Collapse menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 6l-6 6 6 6"/><path d="M20 4v16" opacity=".6"/></svg><span class="t">Collapse menu</span></button>
+    </div>
+  </aside>
+  <main id="main"><div class="wrap"><div class="loading">Loading data</div></div></main>
+</div>
+<div id="modal-root"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const SAMPLE_DATA = {"roads":[{"id":"road-mrl01","roadName":"MRL01-Baghon - Seria Road","packageNo":"UP10118","piu":"PIU Unit 1","remarks":"","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"road-mrl02","roadName":"MRL02-Kheri - Barwa Road","packageNo":"UP10124","piu":"PIU Unit 1","remarks":"","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"}],"layers":[{"id":"lay-base","name":"Base","notes":"","active":true,"version":1,"createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"lay-bituminous","name":"Bituminous","notes":"","active":true,"version":1,"createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"lay-embankment","name":"Embankment","notes":"","active":true,"version":1,"createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"lay-gsb","name":"GSB","notes":"","active":true,"version":1,"createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"lay-subgrade","name":"Subgrade","notes":"","active":true,"version":1,"createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"}],"materials":[{"id":"mat-bc","name":"BC","category":"bituminous","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-clay","name":"Clay","category":"soil","passMin":4,"passMax":6,"rollers":["Vibratory Padfoot","Tamping Foot","Sheepsfoot"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-ggm","name":"Graded Granular Material","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-gravel","name":"Gravel","category":"soil","passMin":3,"passMax":5,"rollers":["Vibratory Padfoot","Vibratory Smooth"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-ogpc","name":"OGPC","category":"bituminous","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-premix","name":"Premix","category":"bituminous","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-sand","name":"Sand","category":"soil","passMin":3,"passMax":5,"rollers":["Vibratory Padfoot","Vibratory Smooth","Pneumatic"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-silt","name":"Silt","category":"soil","passMin":4,"passMax":8,"rollers":["Vibratory Padfoot","Tamping Foot","Pneumatic","Sheepsfoot"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-wbm","name":"WBM","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller","Static Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mat-wmm","name":"WMM","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller","Static Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Per IRC:SP:97-2013, as used in the Annexure I workbook","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"}],"passRules":[{"id":"pr-sg-gravel","layerName":"Subgrade","materialName":"Gravel","category":"soil","passMin":4,"passMax":8,"rollers":["Vibratory Roller"],"active":true,"version":1,"effectiveFrom":"2026-04-01","notes":"Workbook uses 4-8 passes and a vibratory roller for gravel subgrade","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"}],"materialTypes":[{"id":"mt-sandy","name":"Sandy Soil","lcFactor":1.15,"typicalRange":"1.10 - 1.20","categoryLayer":"Sand / sandy soil","basis":"IS 1200 (Part 1):2000 soil-type table","assumption":"","notes":"Most predictable; low cohesion, low swell/shrink.","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-silty","name":"Silty Soil","lcFactor":1.2,"typicalRange":"1.15 - 1.30","categoryLayer":"Silt / silty soil","basis":"IS 1200 (Part 1):2000 soil-type table","assumption":"","notes":"Moisture-sensitive; verify OMC control on site.","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-ordinary","name":"Ordinary Soil","lcFactor":1.2,"typicalRange":"1.15 - 1.30","categoryLayer":"Ordinary soil (sandy loam / mixed silty-sandy) - embankment fill","basis":"IS 1200 (Part 1):2000; IRC:36-2010; MoRTH Sec 305; general swell-shrinkage practice","assumption":"Default used for \"Total Earth Work\" when soil type is not stated. Replace with the soil-specific factor once the borrow-area soil is classified.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-clay","name":"Clayey Soil","lcFactor":1.3,"typicalRange":"1.20 - 1.45","categoryLayer":"Clay / clayey soil","basis":"IS 1200 (Part 1):2000 soil-type table","assumption":"","notes":"Higher shrinkage on compaction; sensitive to moisture content.","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-bc","name":"Black Cotton Soil","lcFactor":1.35,"typicalRange":"1.25 - 1.55 (highly variable)","categoryLayer":"Black cotton / expansive clay","basis":"IRC:91 / IRC SP:100","assumption":"Do not use a generic factor without site data.","notes":"Requires special treatment (lime stabilisation or granular capping).","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-gravelly","name":"Gravelly Soil","lcFactor":1.25,"typicalRange":"1.20 - 1.35","categoryLayer":"Gravel / gravelly soil, moorum","basis":"IS 1200 (Part 1):2000 soil-type table","assumption":"","notes":"Matches the Moorum factor.","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-moorum","name":"Moorum","lcFactor":1.25,"typicalRange":"1.20 - 1.35","categoryLayer":"Gravelly / lateritic soil - MoRTH embankment & sub-grade fill material","basis":"MoRTH Sec 305 (moorum listed as embankment material); compaction-factor method (MDD / loose bulk density)","assumption":"Assumes reasonably graded Moorum, not heavily silty or clayey Moorum.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-rock","name":"Rock Fill (Blasted)","lcFactor":1.15,"typicalRange":"1.10 - 1.25","categoryLayer":"Rock fill (blasted)","basis":"IS 1200 (Part 1):2000 soil-type table","assumption":"","notes":"Large swell on blasting, little further shrinkage on placement; not directly relevant to PMGSY earthwork/GSB/WMM items.","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-coarse-sand","name":"Coarse Sand","lcFactor":1.2,"typicalRange":"1.15 - 1.30","categoryLayer":"Granular sand fill / blinding / filter layer","basis":"General granular-fill compaction practice (analogous to GSB/WMM method)","assumption":"Not the same as \"bulking of sand\" (IS 2386 Part 3), which is a moisture-driven volume increase relevant to concrete batching, not compacted fill quantity.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-cmetal","name":"C Metal","lcFactor":1.25,"typicalRange":"1.20 - 1.30","categoryLayer":"Granular Sub-Base (GSB) aggregate","basis":"MoRTH Sec 401 (GSB); IRC:SP:72-2015; compaction factor = MDD / loose bulk density","assumption":"\"CMetal\" (crushed metal) assumed to be GSB-grading aggregate. Confirm against project DPR/BOQ.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-crushed","name":"Crushed Metal","lcFactor":1.2,"typicalRange":"1.20 - 1.30","categoryLayer":"Granular Sub-Base (GSB) aggregate","basis":"MoRTH Sec 401 (GSB); IRC:SP:72-2015; workbook Input sheet value","assumption":"Workbook Input sheet uses 1.20; reference table lists 1.25 for CMetal. Confirm with domain owner.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-wmm","name":"WMM","lcFactor":1.2,"typicalRange":"1.15 - 1.25","categoryLayer":"Wet Mix Macadam (WMM) base-course aggregate","basis":"MoRTH Sec 406 (WMM); IRC:SP:72-2015; compaction factor = MDD / loose bulk density","assumption":"\"Chips\" assumed to be WMM-grading aggregate based on typical PMGSY BOQ naming. Confirm against project DPR/BOQ.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"},{"id":"mt-wbm","name":"WBM","lcFactor":1.2,"typicalRange":"1.15 - 1.25","categoryLayer":"Water Bound Macadam (WBM) base-course aggregate","basis":"Assumed same as WMM","assumption":"Not listed in the workbook reference table. Confirm with domain owner.","notes":"","unit":"m3","active":true,"version":1,"effectiveFrom":"2026-04-01","createdAt":"2026-10-12T09:00:00.000Z","updatedAt":"2026-10-12T09:00:00.000Z"}],"a1reports":[{"id":"a1-mrl01-0000","roadId":"road-mrl01","reportDate":"2026-10-05","chainageStart":"0","chainageEnd":"200","segmentLength":"200","status":"FINALIZED","remarks":"Values from the supplied Annexure I workbook","rows":[{"id":"r1","layer":"Embankment","material":"Silt","masterId":"mat-silt","category":"soil","passMin":4,"passMax":8,"rollers":["Vibratory Padfoot","Tamping Foot","Pneumatic","Sheepsfoot"],"ruleVersion":1,"layerWidth":"7.5","rollerWidth":"2.1","rollerTypeVts":"Vibratory Padfoot","vtsDistance":"1799","masterColl":"materials"},{"id":"r2","layer":"Subgrade","material":"Gravel","masterId":"pr-sg-gravel","category":"soil","passMin":4,"passMax":8,"rollers":["Vibratory Roller"],"ruleVersion":1,"layerWidth":"7","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"4000","masterColl":"passRules"},{"id":"r3","layer":"GSB","material":"Graded Granular Material","masterId":"mat-ggm","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"ruleVersion":1,"layerWidth":"5.5","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"3000","masterColl":"materials"},{"id":"r4","layer":"Base","material":"WMM","masterId":"mat-wmm","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller","Static Roller"],"ruleVersion":1,"layerWidth":"4.5","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"3200","masterColl":"materials"},{"id":"r5","layer":"Bituminous","material":"Premix","masterId":"mat-premix","category":"bituminous","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"ruleVersion":1,"layerWidth":"3.75","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"2000","masterColl":"materials"}],"history":[{"action":"Created","at":"2026-10-05T10:12:00.000Z"},{"action":"Finalized","at":"2026-10-06T08:30:00.000Z"}],"createdAt":"2026-10-05T10:12:00.000Z","updatedAt":"2026-10-06T08:30:00.000Z"},{"id":"a1-mrl01-0200","roadId":"road-mrl01","reportDate":"2026-10-11","chainageStart":"200","chainageEnd":"400","segmentLength":"200","status":"DRAFT","remarks":"Bituminous layer GPS data awaited","rows":[{"id":"r1","layer":"Embankment","material":"Silt","masterId":"mat-silt","category":"soil","passMin":4,"passMax":8,"rollers":["Vibratory Padfoot","Tamping Foot","Pneumatic","Sheepsfoot"],"ruleVersion":1,"layerWidth":"7.5","rollerWidth":"2.1","rollerTypeVts":"Vibratory Padfoot","vtsDistance":"6400","masterColl":"materials"},{"id":"r2","layer":"Subgrade","material":"Gravel","masterId":"pr-sg-gravel","category":"soil","passMin":4,"passMax":8,"rollers":["Vibratory Roller"],"ruleVersion":1,"layerWidth":"7","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"5900","masterColl":"passRules"},{"id":"r3","layer":"GSB","material":"Graded Granular Material","masterId":"mat-ggm","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"ruleVersion":1,"layerWidth":"5.5","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"4100","masterColl":"materials"},{"id":"r4","layer":"Base","material":"WMM","masterId":"mat-wmm","category":"granular","passMin":4,"passMax":6,"rollers":["Vibratory Roller","Static Roller"],"ruleVersion":1,"layerWidth":"4.5","rollerWidth":"2.1","rollerTypeVts":"Vibratory Roller","vtsDistance":"2700","masterColl":"materials"},{"id":"r5","layer":"Bituminous","material":"Premix","masterId":"mat-premix","category":"bituminous","passMin":4,"passMax":6,"rollers":["Vibratory Roller"],"ruleVersion":1,"layerWidth":"3.75","rollerWidth":"2.1","rollerTypeVts":"","vtsDistance":"","masterColl":"materials"}],"history":[{"action":"Created","at":"2026-10-11T11:40:00.000Z"}],"createdAt":"2026-10-11T11:40:00.000Z","updatedAt":"2026-10-11T11:40:00.000Z"}],"a2reports":[{"createdAt":"2026-10-10T09:05:00.000Z","history":[{"action":"Created","at":"2026-10-10T09:05:00.000Z"}],"id":"a2-mrl01-oct","materials":[{"dprQty":"500","id":"m1","lcFactor":"1.15","lcOverridden":false,"leadKm":"23","masterId":"mt-sandy","materialType":"Sandy Soil","ruleVersion":1,"source":"A","trucks":[{"capacity":"5","distanceKm":"400","fill":"1","id":"t1","name":"Truck 1"},{"capacity":"6","distanceKm":"380","fill":"1","id":"t2","name":"Truck 2"},{"capacity":"7","distanceKm":"260","fill":"1","id":"t3","name":"Truck 3"},{"capacity":"8","distanceKm":"360","fill":"1","id":"t4","name":"Truck 4"},{"capacity":"5","distanceKm":"480","fill":"1","id":"t5","name":"Truck 5"},{"capacity":"6","distanceKm":"100","fill":"1","id":"t6","name":"Truck 6"}],"unit":"m3","workItem":"Embankment"},{"dprQty":"500","id":"m2","lcFactor":"1.25","lcOverridden":false,"leadKm":"12","masterId":"mt-moorum","materialType":"Moorum","ruleVersion":1,"source":"B","trucks":[{"capacity":"5","distanceKm":"500","fill":"1","id":"t1","name":"Truck 1"},{"capacity":"6","distanceKm":"380","fill":"1","id":"t2","name":"Truck 2"},{"capacity":"7","distanceKm":"260","fill":"1","id":"t3","name":"Truck 3"},{"capacity":"8","distanceKm":"360","fill":"1","id":"t4","name":"Truck 4"},{"capacity":"5","distanceKm":"480","fill":"1","id":"t5","name":"Truck 5"},{"capacity":"6","distanceKm":"100","fill":"1","id":"t6","name":"Truck 6"}],"unit":"m3","workItem":"Subgrade"},{"dprQty":"400","id":"m3","lcFactor":"1.2","lcOverridden":false,"leadKm":"18","masterId":"mt-crushed","materialType":"Crushed Metal","ruleVersion":1,"source":"C","trucks":[{"capacity":"5","distanceKm":"400","fill":"1","id":"t1","name":"Truck 1"},{"capacity":"6","distanceKm":"380","fill":"1","id":"t2","name":"Truck 2"},{"capacity":"7","distanceKm":"260","fill":"1","id":"t3","name":"Truck 3"},{"capacity":"8","distanceKm":"360","fill":"1","id":"t4","name":"Truck 4"},{"capacity":"5","distanceKm":"480","fill":"1","id":"t5","name":"Truck 5"},{"capacity":"6","distanceKm":"100","fill":"1","id":"t6","name":"Truck 6"}],"unit":"m3","workItem":"GSB"},{"dprQty":"300","id":"m4","lcFactor":"1.2","lcOverridden":false,"leadKm":"21","masterId":"mt-wmm","materialType":"WMM","ruleVersion":1,"source":"D","trucks":[{"capacity":"5","distanceKm":"400","fill":"1","id":"t1","name":"Truck 1"},{"capacity":"6","distanceKm":"380","fill":"1","id":"t2","name":"Truck 2"},{"capacity":"7","distanceKm":"260","fill":"1","id":"t3","name":"Truck 3"},{"capacity":"8","distanceKm":"360","fill":"1","id":"t4","name":"Truck 4"},{"capacity":"5","distanceKm":"480","fill":"1","id":"t5","name":"Truck 5"},{"capacity":"6","distanceKm":"100","fill":"1","id":"t6","name":"Truck 6"}],"unit":"m3","workItem":"Base"}],"remarks":"Values from the supplied Annexure II workbook","reportDate":"2026-10-10","roadId":"road-mrl01","status":"DRAFT","updatedAt":"2026-10-10T09:05:00.000Z"}],"settings":[{"id":"app","precision":2}]};
+function buildSample(){ return JSON.parse(JSON.stringify(SAMPLE_DATA)); }
+
+
+</script>
+<script>
+"use strict";
+/* ---------------- helpers ---------------- */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const nowISO = () => new Date().toISOString();
+const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+const clone = o => JSON.parse(JSON.stringify(o));
+const fmtDate = s => { if (!s) return '—'; const d = new Date(s.length === 10 ? s + 'T00:00:00' : s); return isNaN(d) ? s : d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); };
+const fmtDateTime = s => { if (!s) return '—'; const d = new Date(s); return isNaN(d) ? s : d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const relTime = s => { const d = new Date(s); const m = Math.round((Date.now() - d) / 60000); if (!isFinite(m)) return '—'; if (m < 1) return 'just now'; if (m < 60) return m + ' min ago'; const h = Math.round(m / 60); if (h < 24) return h + ' h ago'; const dd = Math.round(h / 24); if (dd < 30) return dd + ' d ago'; return fmtDate(s); };
+const prec = () => { const s = S.data.settings.get('app'); const p = s && Number(s.precision); return Number.isInteger(p) && p >= 0 && p <= 6 ? p : 2; };
+const fmt = (n, dp) => (n === null || n === undefined || !isFinite(n)) ? '—' : Number(n).toLocaleString('en-IN', { minimumFractionDigits: dp ?? prec(), maximumFractionDigits: dp ?? prec() });
+const fmtPlain = n => (n === null || n === undefined || n === '' || !isFinite(Number(n))) ? '—' : String(Number(n));
+const ICON = {
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>'
+};
+
+/* ---------------- data store ---------------- */
+const COLLS = ['roads', 'layers', 'materials', 'passRules', 'materialTypes', 'a1reports', 'a2reports', 'settings'];
+const LS_KEY = 'gpsvts-annexure-demo-v1';
+const S = { mode: 'connecting', db: null, data: {}, readOnly: false, ready: false };
+COLLS.forEach(c => S.data[c] = new Map());
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) { const o = JSON.parse(raw); COLLS.forEach(c => S.data[c] = new Map(Object.entries(o[c] || {}))); }
+  } catch (e) { /* storage unavailable: keep in memory */ }
+}
+function saveLocal() {
+  try { const o = {}; COLLS.forEach(c => o[c] = Object.fromEntries(S.data[c])); localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch (e) { }
+}
+async function put(coll, doc) {
+  if (S.readOnly) throw { code: 'read_only', message: 'You have view-only access.' };
+  const body = clone(doc);
+  if (S.mode === 'cloud') {
+    try { await S.db.collection(coll).doc(body.id).set(body); }
+    catch (e) {
+      if (e && e.code === 'unavailable') { await new Promise(r => setTimeout(r, 600 + Math.random() * 600)); await S.db.collection(coll).doc(body.id).set(body); }
+      else { if (e && e.code === 'invalid_argument') { S.readOnly = true; updateMode(); } throw e; }
+    }
+    S.data[coll].set(body.id, body);
+  } else { S.data[coll].set(body.id, body); saveLocal(); }
+}
+async function remove(coll, id) {
+  if (S.readOnly) throw { code: 'read_only', message: 'You have view-only access.' };
+  if (S.mode === 'cloud') await S.db.collection(coll).doc(id).delete();
+  S.data[coll].delete(id);
+  if (S.mode !== 'cloud') saveLocal();
+}
+const all = c => Array.from(S.data[c].values());
+const road = id => S.data.roads.get(id);
+
+function writeErr(e) {
+  if (e && e.code === 'read_only') return 'You have view-only access, so changes cannot be saved.';
+  if (e && e.code === 'quota_exceeded') return 'Storage is full. Delete old drafts and try again.';
+  if (e && e.code === 'invalid_argument') return 'You do not have permission to change shared data. Ask the owner for Contributor access.';
+  return 'Could not save. Check your connection and try again.';
+}
+
+async function loadSample() {
+  const s = buildSample();
+  for (const c of COLLS) for (const d of s[c]) await put(c, d);
+}
+async function wipeAll() {
+  for (const c of COLLS) for (const id of Array.from(S.data[c].keys())) await remove(c, id);
+}
+
+/* ---------------- calculations (single source of truth) ---------------- */
+const Calc = {
+  n(v) { if (v === '' || v === null || v === undefined) return null; const x = Number(String(v).trim()); return String(v).trim() === '' ? null : (Number.isFinite(x) ? x : NaN); },
+  roundUp(x) { return x >= 0 ? Math.ceil(x - 1e-9) : Math.floor(x + 1e-9); },
+  numErr(x, okCond, msg) { return Number.isNaN(x) ? 'Enter a number' : (okCond ? null : msg); },
+  /* Annexure I, one layer row */
+  a1Row(r, segLen) {
+    const n = Calc.n, out = { errors: {}, missing: [], trips: null, eff: null, avg: null, status: null };
+    const W = n(r.layerWidth), R = n(r.rollerWidth), D = n(r.vtsDistance);
+    if (!r.layer) out.errors.layer = 'Select a layer';
+    if (!r.material) out.errors.material = 'Select a material';
+    if (W === null) out.missing.push('layerWidth'); else { const m = Calc.numErr(W, W > 0, 'Must be greater than 0'); if (m) out.errors.layerWidth = m; }
+    if (R === null) out.missing.push('rollerWidth'); else {
+      let m = Calc.numErr(R, R > 0, 'Must be greater than 0');
+      if (!m && r.category === 'bituminous' && R <= 0.075) m = 'Must exceed 0.075 m overlap';
+      if (m) out.errors.rollerWidth = m;
+    }
+    if (D === null) out.missing.push('vtsDistance'); else { const m = Calc.numErr(D, D >= 0, 'Cannot be negative'); if (m) out.errors.vtsDistance = m; }
+    const pmin = n(r.passMin), pmax = n(r.passMax);
+    if (r.material) {
+      if (pmin === null) out.missing.push('passMin'); else { const m = Calc.numErr(pmin, pmin > 0, 'Must be greater than 0'); if (m) out.errors.passMin = m; }
+      if (pmax === null) out.missing.push('passMax'); else { let m = Calc.numErr(pmax, pmax > 0, 'Must be greater than 0'); if (!m && pmin > 0 && pmax < pmin) m = 'Must be at least the minimum'; if (m) out.errors.passMax = m; }
+    }
+    if (pmin !== null && pmax !== null && pmin > 0 && pmax >= pmin) out.avg = (pmin + pmax) / 2;
+    if (W !== null && R !== null && !out.errors.layerWidth && !out.errors.rollerWidth) {
+      const raw = r.category === 'bituminous' ? (W - R) / (R - 0.075) + 1 : (W - R) / (R * 2 / 3) + 1;
+      out.trips = Math.max(1, Calc.roundUp(raw));
+    }
+    if (out.trips && segLen !== null && segLen > 0 && D !== null && !out.errors.vtsDistance) out.eff = D / (segLen * out.trips);
+    if (out.eff !== null && out.avg !== null) out.status = out.eff < out.avg ? 'Unsatisfactory' : 'Satisfactory';
+    return out;
+  },
+  a1(rep) {
+    const seg = Calc.n(rep.segmentLength);
+    const segOk = seg !== null && seg > 0 ? seg : null;
+    const rows = (rep.rows || []).map(r => Calc.a1Row(r, segOk));
+    const sat = rows.filter(r => r.status === 'Satisfactory').length;
+    const uns = rows.filter(r => r.status === 'Unsatisfactory').length;
+    return { rows, summary: { total: rows.length, sat, uns, pending: rows.length - sat - uns } };
+  },
+  /* Annexure II, one material with its trucks */
+  a2Mat(m) {
+    const n = Calc.n, out = { errors: {}, missing: [], loose: null, trucks: [], total: null, pct: null, partial: false };
+    const lead = n(m.leadKm), dpr = n(m.dprQty), lc = n(m.lcFactor);
+    if (!m.workItem) out.errors.workItem = 'Select a work item';
+    if (!m.materialType) out.errors.materialType = 'Select a material type';
+    if (lead === null) out.missing.push('leadKm'); else { const e = Calc.numErr(lead, lead > 0, 'Must be greater than 0'); if (e) out.errors.leadKm = e; }
+    if (dpr === null) out.missing.push('dprQty'); else { const e = Calc.numErr(dpr, dpr > 0, 'Must be greater than 0'); if (e) out.errors.dprQty = e; }
+    if (lc === null) out.missing.push('lcFactor'); else { const e = Calc.numErr(lc, lc > 0, 'Must be greater than 0'); if (e) out.errors.lcFactor = e; }
+    const leadOk = !out.errors.leadKm && lead !== null, lcOk = !out.errors.lcFactor && lc !== null, dprOk = !out.errors.dprQty && dpr !== null;
+    if (dprOk && lcOk) out.loose = dpr * lc;
+    out.trucks = (m.trucks || []).map(t => {
+      const o = { errors: {}, missing: [], trips: null, qty: null };
+      const cap = n(t.capacity), fill = n(t.fill), dist = n(t.distanceKm);
+      if (!String(t.name || '').trim()) o.errors.name = 'Enter a truck name or number';
+      if (cap === null) o.missing.push('capacity'); else { const e = Calc.numErr(cap, cap > 0, 'Must be greater than 0'); if (e) o.errors.capacity = e; }
+      if (fill === null) o.missing.push('fill'); else { const e = Calc.numErr(fill, fill > 0, 'Must be greater than 0'); if (e) o.errors.fill = e; }
+      if (dist === null) o.missing.push('distanceKm'); else { const e = Calc.numErr(dist, dist >= 0, 'Cannot be negative'); if (e) o.errors.distanceKm = e; }
+      if (dist !== null && !o.errors.distanceKm && leadOk) o.trips = dist / (2 * lead);
+      if (o.trips !== null && cap !== null && !o.errors.capacity && fill !== null && !o.errors.fill && lcOk) o.qty = (o.trips * cap * fill) / lc;
+      return o;
+    });
+    if (out.trucks.length) {
+      out.total = out.trucks.reduce((s, t) => s + (t.qty ?? 0), 0);
+      out.partial = out.trucks.some(t => t.qty === null);
+    }
+    if (out.total !== null && dprOk) out.pct = out.total / dpr * 100;
+    return out;
+  },
+  a2(rep) {
+    const mats = (rep.materials || []).map(Calc.a2Mat);
+    let dpr = 0, vts = 0, ok = true;
+    (rep.materials || []).forEach((m, i) => { const d = Calc.n(m.dprQty); if (d > 0 && mats[i].total !== null) { dpr += d; vts += mats[i].total; } else ok = false; if (mats[i].partial) ok = false; });
+    return { mats, overall: dpr > 0 ? vts / dpr * 100 : null, complete: ok && mats.length > 0, dpr, vts };
+  }
+};
+const FIELD_LABEL = { passMin: 'recommended passes (min)', passMax: 'recommended passes (max)', layerWidth: 'layer width', rollerWidth: 'roller width', vtsDistance: 'VTS distance', leadKm: 'lead distance', dprQty: 'DPR quantity', lcFactor: 'L/C factor', capacity: 'capacity', fill: 'filling factor', distanceKm: 'distance' };
+
+/* ---------------- validation ---------------- */
+function valHeaderCommon(rep, e, chain) {
+  const n = Calc.n;
+  if (!rep.roadId) e['h.roadId'] = { msg: 'Select a road', req: 1, draft: 1 };
+  else if (rep.packageNo !== undefined) {
+    const pk = String(rep.packageNo || '').trim();
+    if (!pk) e['h.packageNo'] = { msg: 'Enter the package number', req: 1, draft: 1 };
+    else if (all('roads').some(x => x.id !== rep.roadId && eqi(x.packageNo, pk))) e['h.packageNo'] = { msg: 'Another road already uses this package number', draft: 1 };
+  }
+  if (!chain) return;
+  const cs = n(rep.chainageStart), ce = n(rep.chainageEnd), sl = n(rep.segmentLength);
+  if (cs === null) e['h.chainageStart'] = { msg: 'Required', req: 1 }; else { const m = Calc.numErr(cs, cs >= 0, 'Enter 0 or more'); if (m) e['h.chainageStart'] = { msg: m }; }
+  if (ce === null) e['h.chainageEnd'] = { msg: 'Required', req: 1 }; else {
+    let m = Calc.numErr(ce, ce >= 0, 'Enter 0 or more');
+    if (!m && cs !== null && cs >= 0 && ce < cs) m = 'Must be greater than or equal to chainage start';
+    if (m) e['h.chainageEnd'] = { msg: m };
+  }
+  if (sl === null) e['h.segmentLength'] = { msg: 'Required', req: 1 }; else { const m = Calc.numErr(sl, sl > 0, 'Must be greater than 0'); if (m) e['h.segmentLength'] = { msg: m }; }
+}
+function valA1(rep) {
+  const e = {}; valHeaderCommon(rep, e, true);
+  if (!rep.rows.length) e['rows'] = { msg: 'Add at least one layer', req: 1 };
+  const c = Calc.a1(rep);
+  c.rows.forEach((rc, i) => {
+    Object.entries(rc.errors).forEach(([k, m]) => e[`r.${i}.${k}`] = { msg: m, req: m.startsWith('Select') ? 1 : 0 });
+    rc.missing.forEach(k => e[`r.${i}.${k}`] = { msg: 'Required', req: 1 });
+  });
+  return e;
+}
+function valA2(rep) {
+  const e = {}; valHeaderCommon(rep, e, false);
+  if (!rep.materials.length) e['mats'] = { msg: 'Add at least one material', req: 1 };
+  rep.materials.forEach((m, i) => {
+    const mc = Calc.a2Mat(m);
+    Object.entries(mc.errors).forEach(([k, msg]) => e[`m.${i}.${k}`] = { msg, req: msg.startsWith('Select') ? 1 : 0 });
+    mc.missing.forEach(k => e[`m.${i}.${k}`] = { msg: 'Required', req: 1 });
+    if (!m.trucks.length) e[`m.${i}.trucks`] = { msg: 'Add at least one truck', req: 1 };
+    mc.trucks.forEach((t, j) => {
+      Object.entries(t.errors).forEach(([k, msg]) => e[`t.${i}.${j}.${k}`] = { msg, req: k === 'name' ? 1 : 0 });
+      t.missing.forEach(k => e[`t.${i}.${j}.${k}`] = { msg: 'Required', req: 1 });
+    });
+  });
+  return e;
+}
+const blocking = (e, finalize) => Object.entries(e).filter(([k, v]) => finalize ? true : (!v.req || v.draft));
+
+/* ---------------- UI primitives ---------------- */
+let toastTimer;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600); }
+function statusPill(s) {
+  if (s === 'FINALIZED') return '<span class="pill final">✓ Finalized</span>';
+  return '<span class="pill draft">✎ Draft</span>';
+}
+function compPill(s, pendingText) {
+  if (s === 'Satisfactory') return '<span class="pill ok">✓ Satisfactory</span>';
+  if (s === 'Unsatisfactory') return '<span class="pill bad">✕ Unsatisfactory</span>';
+  return `<span class="pending">${esc(pendingText || 'Pending input')}</span>`;
+}
+function openModal(html, cls = '') {
+  const root = $('#modal-root');
+  root.innerHTML = `<div class="scrim" data-scrim><div class="dlg ${cls}" role="dialog" aria-modal="true">${html}</div></div>`;
+  const f = root.querySelector('input:not([type=hidden]):not([readonly]),select,textarea,button.primary');
+  setTimeout(() => f && f.focus(), 20);
+  return root.firstElementChild;
+}
+function closeModal() { $('#modal-root').innerHTML = ''; }
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#modal-root').innerHTML) { const c = $('#modal-root [data-cancel]'); c ? c.click() : closeModal(); } });
+document.addEventListener('mousedown', e => { if (e.target.matches && e.target.matches('[data-scrim]')) { const c = $('#modal-root [data-cancel]'); c ? c.click() : closeModal(); } });
+function confirmDlg({ title, body, ok = 'Confirm', danger = false }) {
+  return new Promise(res => {
+    const el = openModal(`<div class="dlg-h"><h2>${esc(title)}</h2></div><div class="dlg-b"><p style="margin:0">${body}</p></div>
+      <div class="dlg-f"><button class="btn" data-cancel>Cancel</button><button class="btn ${danger ? 'danger solid' : 'primary'}" data-ok>${esc(ok)}</button></div>`, 'small');
+    el.querySelector('[data-cancel]').onclick = () => { closeModal(); res(false); };
+    el.querySelector('[data-ok]').onclick = () => { closeModal(); res(true); };
+    setTimeout(() => el.querySelector('[data-ok]').focus(), 30);
+  });
+}
+function opt(v, label, cur) { return `<option value="${esc(v)}"${String(v) === String(cur ?? '') ? ' selected' : ''}>${esc(label ?? v)}</option>`; }
+function errSpan(key) { return `<span class="err" data-err="${esc(key)}"></span>`; }
+
+function updateMode() {
+  const m = $('#mode');
+  if (S.mode === 'cloud') { m.className = 'mode'; m.innerHTML = `<b><span class="dot"></span>Saved to shared storage</b>${S.readOnly ? 'You have view-only access' : 'Everyone you share this page with sees the same data'}`; }
+  else if (S.mode === 'local') { m.className = 'mode local'; m.innerHTML = '<b><span class="dot"></span>Saved in this browser</b>Data stays on this device only'; }
+}
+
+/* ---------------- routing ---------------- */
+let E = null; // active editor state
+function parseRoute() {
+  const h = (location.hash || '#/').replace(/^#\/?/, '');
+  const p = h.split('/').filter(Boolean);
+  return p;
+}
+async function go(hash) {
+  if (E && E.dirty && !E.readonly) {
+    const ok = await confirmDlg({ title: 'Discard unsaved changes?', body: 'You have edits that are not saved. Leaving this page will lose them.', ok: 'Discard changes', danger: true });
+    if (!ok) return;
+    E.dirty = false;
+  }
+  if (location.hash === hash) route(); else location.hash = hash;
+}
+window.addEventListener('hashchange', route);
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/"]');
+  if (a && E && E.dirty && !E.readonly) { e.preventDefault(); go(a.getAttribute('href')); }
+});
+window.addEventListener('beforeunload', e => { if (E && E.dirty && !E.readonly) { e.preventDefault(); e.returnValue = ''; } });
+
+function setNav(key) { $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.nav === key)); }
+const main = () => $('#main');
+function page(html) { main().innerHTML = `<div class="wrap">${html}</div>`; }
+
+function route() {
+  if (!S.ready) return;
+  const p = parseRoute();
+  const [a, b, c] = p;
+  if (a === 'a1' && b) { setNav('a1'); if (c === 'output') { E = null; return viewOutput('a1', b); } return openA1(b); }
+  if (a === 'a2' && b) { setNav('a2'); if (c === 'output') { E = null; return viewOutput('a2', b); } return openA2(b); }
+  E = null;
+  if (a === 'roads') { setNav('roads'); return viewRoads(); }
+  if (a === 'a1') { setNav('a1'); return viewA1List(); }
+  if (a === 'a2') { setNav('a2'); return viewA2List(); }
+  if (a === 'settings') { setNav('settings'); return viewSettings(b || 'layers'); }
+  setNav('dash'); return viewDashboard();
+}
+let remoteTimer;
+function onRemoteChange() {
+  clearTimeout(remoteTimer);
+  remoteTimer = setTimeout(() => {
+    if (E) { if (!E.dirty && E.id !== 'new' && !$('#modal-root').innerHTML) { const coll = E.kind === 'a1' ? 'a1reports' : 'a2reports'; const fresh = S.data[coll].get(E.id); if (fresh && fresh.updatedAt !== E.doc.updatedAt) route(); } return; }
+    if (!$('#modal-root').innerHTML) { const y = window.scrollY; route(); window.scrollTo(0, y); }
+  }, 250);
+}
+
+/* ---------------- shared report helpers ---------------- */
+function roadLabel(id) { const r = road(id); return r ? r.roadName : (id ? 'Unknown road' : '—'); }
+function a1Summary(rep) {
+  const c = Calc.a1(rep).summary;
+  if (!c.total) return '<span class="pending">No layers added</span>';
+  return `<div class="res">
+    <div class="res-pills">${c.sat ? `<span class="pill ok">✓ ${c.sat} Satisfactory</span>` : ''}${c.uns ? `<span class="pill bad">✕ ${c.uns} Unsatisfactory</span>` : ''}${c.pending ? `<span class="pill warn">${c.pending} Pending input</span>` : ''}</div>
+    <div class="cell-sub">${c.sat} of ${c.total} layer${c.total === 1 ? '' : 's'} satisfactory</div></div>`;
+}
+function a2Summary(rep) {
+  const c = Calc.a2(rep);
+  if (!rep.materials.length) return '<span class="pending">No materials added</span>';
+  const p = c.overall;
+  return `<div class="res">
+    <div class="res-pct"><span class="big-num">${p === null ? '—' : fmt(p, 1) + '%'}</span> <span class="cell-sub">of DPR quantity received</span></div>
+    <div class="bar" style="height:10px" role="img" aria-label="${p === null ? 'pending' : fmt(p, 1) + ' percent'}"><span class="${p !== null && p < 80 ? 'low' : ''}" style="width:${p === null ? 0 : Math.min(100, Math.max(0, p))}%"></span></div>
+    ${c.complete ? '' : '<div class="pending">Some inputs pending</div>'}</div>`;
+}
+function chainLabel(r) { const s = Calc.n(r.chainageStart), e = Calc.n(r.chainageEnd); return (s === null && e === null) ? '—' : `${fmtPlain(r.chainageStart)} – ${fmtPlain(r.chainageEnd)} m`; }
+function reportActions(kind, r) {
+  const ro = S.readOnly;
+  let h = `<a class="btn sm" href="#/${kind}/${r.id}/output">Output</a><a class="btn sm ghost" href="#/${kind}/${r.id}">${r.status === 'DRAFT' && !ro ? 'Edit' : 'View'}</a>`;
+  if (!ro) {
+    h += `<button class="btn sm ghost danger" data-act="delrep" data-kind="${kind}" data-id="${r.id}">Delete</button>`;
+  }
+  return h;
+}
+async function setReportStatus(kind, id, status, action) {
+  const coll = kind === 'a1' ? 'a1reports' : 'a2reports';
+  const d = clone(S.data[coll].get(id)); if (!d) return;
+  d.status = status; d.updatedAt = nowISO(); d.history = (d.history || []).concat([{ action, at: nowISO() }]);
+  await put(coll, d);
+}
+async function listAction(btn) {
+  const { act, kind, id } = btn.dataset;
+  const coll = kind === 'a1' ? 'a1reports' : 'a2reports';
+  const r = S.data[coll].get(id);
+  try {
+    if (act === 'delrep') {
+      const what = r.status === 'DRAFT' ? 'draft' : 'finalized report';
+      if (await confirmDlg({ title: `Delete this ${what}?`, body: `The ${what} for <b>${esc(roadLabel(r.roadId))}</b> will be permanently deleted. This cannot be undone.`, ok: 'Delete report', danger: true })) { await remove(coll, id); toast('Report deleted'); route(); }
+    }
+  } catch (e) { toast(writeErr(e)); }
+}
+
+/* ---------------- empty-data helper ---------------- */
+function noDataBanner() {
+  const empty = COLLS.filter(c => c !== 'settings').every(c => S.data[c].size === 0);
+  if (!empty) return '';
+  return `<div class="panel"><div class="empty"><h3>No data yet</h3><p>Start by adding a road and the layer and material rules in Settings, or load the sample records taken from the two Annexure workbooks.</p>
+  <div class="row" style="justify-content:center">${S.readOnly ? '' : '<button class="btn primary" data-act="sample">Load sample data</button><a class="btn" href="#/roads">Add a road</a>'}</div></div></div>`;
+}
+
+/* ---------------- dashboard ---------------- */
+const dashF = { q: '', type: 'all', status: 'all' };
+function viewDashboard() {
+  const roads = all('roads');
+  const a1 = all('a1reports'), a2 = all('a2reports');
+  const drafts = a1.concat(a2).filter(r => r.status === 'DRAFT').length;
+  const a1Final = a1.filter(r => r.status === 'FINALIZED').length, a2Final = a2.filter(r => r.status === 'FINALIZED').length;
+  const uns = a1.reduce((s, r) => s + Calc.a1(r).summary.uns, 0);
+  page(`
+  <div class="top"><div><h1>Dashboard</h1><p class="sub">Compaction and material-quantity checks from GPS vehicle tracking data.</p></div></div>
+  ${noDataBanner()}
+  <div class="stats">
+    <div class="stat"><div class="k">Roads</div><div class="v">${roads.length}</div><div class="d">${new Set(a1.concat(a2).map(r => r.roadId)).size} with reports</div></div>
+    <div class="stat"><div class="k">Annexure I reports</div><div class="v">${a1.length}</div><div class="d">${a1Final} finalized</div></div>
+    <div class="stat"><div class="k">Annexure II reports</div><div class="v">${a2.length}</div><div class="d">${a2Final} finalized</div></div>
+    <div class="stat"><div class="k">Drafts to finish</div><div class="v">${drafts}</div><div class="d">${uns} unsatisfactory layer${uns === 1 ? '' : 's'} across reports</div></div>
+  </div>
+  ${S.readOnly ? '' : `<div class="quick">
+    <a href="#/a1/new"><div class="ico">I</div><div><b>New roller-pass report</b><span>Annexure I: effective passes and compaction category per layer</span></div></a>
+    <a href="#/a2/new"><div class="ico ii">II</div><div><b>New material-quantity report</b><span>Annexure II: truck trips, delivered quantity and implementation %</span></div></a>
+  </div>`}
+  <div class="panel">
+    <div class="panel-h"><h2>Recent reports</h2></div>
+    <div class="filters">
+      <div class="fld grow"><label for="dq">Search road or package</label><input class="txt" id="dq" value="${esc(dashF.q)}" placeholder="e.g. Baghon or UP10118"></div>
+      <div class="fld"><label for="dt">Report type</label><select class="txt" id="dt">${opt('all', 'All types', dashF.type)}${opt('a1', 'Annexure I', dashF.type)}${opt('a2', 'Annexure II', dashF.type)}</select></div>
+      <div class="fld"><label for="ds">Status</label><select class="txt" id="ds">${opt('all', 'All', dashF.status)}${opt('DRAFT', 'Draft', dashF.status)}${opt('FINALIZED', 'Finalized', dashF.status)}</select></div>
+    </div>
+    <div id="dash-list"></div>
+  </div>`);
+  const draw = () => {
+    const q = dashF.q.trim().toLowerCase();
+    let rows = a1.map(r => ({ k: 'a1', r })).concat(a2.map(r => ({ k: 'a2', r })));
+    rows = rows.filter(({ k, r }) => {
+      if (dashF.type !== 'all' && dashF.type !== k) return false;
+      if (dashF.status !== 'all' && (r.status === 'DRAFT' ? 'DRAFT' : 'FINALIZED') !== dashF.status) return false;
+      if (q) { const rd = road(r.roadId) || {}; if (!((rd.roadName || '').toLowerCase().includes(q) || (rd.packageNo || '').toLowerCase().includes(q))) return false; }
+      return true;
+    }).sort((x, y) => String(y.r.updatedAt).localeCompare(String(x.r.updatedAt))).slice(0, 12);
+    $('#dash-list').innerHTML = rows.length ? `<div class="tbl-wrap"><table class="grid resp"><thead><tr><th>Report</th><th>Road</th><th>Result</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map(({ k, r }) => { const rd = road(r.roadId) || {}; return `<tr class="clickable" data-open="#/${k}/${r.id}/output">
+        <td><span class="cell-main">${k === 'a1' ? 'Annexure I' : 'Annexure II'}</span><div class="cell-sub">${k === 'a1' ? 'Roller passes, ' + chainLabel(r) : 'Material quantity'}</div></td>
+        <td><span class="cell-main">${esc(rd.roadName || '—')}</span><div class="cell-sub">${esc(rd.packageNo || '')}</div></td>
+        <td>${k === 'a1' ? a1Summary(r) : a2Summary(r)}</td><td>${statusPill(r.status)}</td>
+        <td class="acts"><a class="btn sm" href="#/${k}/${r.id}/output">View</a></td></tr>`; }).join('')}
+      </tbody></table></div>` : `<div class="empty"><h3>No reports match</h3><p>Change the filters, or create a new Annexure I or Annexure II report.</p></div>`;
+  };
+  draw();
+  $('#dq').oninput = e => { dashF.q = e.target.value; draw(); };
+  $('#dt').onchange = e => { dashF.type = e.target.value; draw(); };
+  $('#ds').onchange = e => { dashF.status = e.target.value; draw(); };
+}
+
+/* ---------------- report list pages ---------------- */
+const listF = { a1: { q: '', status: 'all', from: '', to: '' }, a2: { q: '', status: 'all', from: '', to: '' } };
+function viewReportList(kind) {
+  const f = listF[kind];
+  const isA1 = kind === 'a1';
+  page(`<div class="top"><div><h1>${isA1 ? 'Annexure I: Roller passes' : 'Annexure II: Material quantity'}</h1>
+    <p class="sub">${isA1 ? 'GPS-VTS based determination of the number of roller passes per layer.' : 'GPS-VTS based verification of material brought to site against DPR quantity.'}</p></div>
+    ${S.readOnly ? '' : `<a class="btn primary" href="#/${kind}/new">${ICON.plus}New report</a>`}</div>
+    ${noDataBanner()}
+    <div class="panel">
+      <div class="filters">
+        <div class="fld grow"><label for="lq">Search road or package</label><input class="txt" id="lq" value="${esc(f.q)}" placeholder="Road name or package number"></div>
+        <div class="fld"><label for="ls">Status</label><select class="txt" id="ls">${opt('all', 'All', f.status)}${opt('DRAFT', 'Draft', f.status)}${opt('FINALIZED', 'Finalized', f.status)}</select></div>
+      </div><div id="rep-list"></div></div>`);
+  const draw = () => {
+    const q = f.q.trim().toLowerCase();
+    const rows = all(isA1 ? 'a1reports' : 'a2reports').filter(r => {
+      if (f.status !== 'all' && (r.status === 'DRAFT' ? 'DRAFT' : 'FINALIZED') !== f.status) return false;
+      if (q) { const rd = road(r.roadId) || {}; if (!((rd.roadName || '').toLowerCase().includes(q) || (rd.packageNo || '').toLowerCase().includes(q))) return false; }
+      return true;
+    }).sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
+    $('#rep-list').innerHTML = rows.length ? `<div class="tbl-wrap"><table class="grid resp"><thead><tr><th>Road</th>${isA1 ? '<th>Chainage</th><th class="num">Segment</th><th class="num">Layers</th>' : '<th class="num">Materials</th><th class="num">Trucks</th>'}<th>${isA1 ? 'Compaction result' : 'Implementation'}</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map(r => { const rd = road(r.roadId) || {}; return `<tr class="clickable" data-open="#/${kind}/${r.id}">
+        <td><span class="cell-main">${esc(rd.roadName || '—')}</span><div class="cell-sub">${esc(rd.packageNo || '')}</div></td>
+        ${isA1 ? `<td>${chainLabel(r)}</td><td class="num">${fmtPlain(r.segmentLength)} m</td><td class="num">${r.rows.length}</td>` : `<td class="num">${r.materials.length}</td><td class="num">${r.materials.reduce((s, m) => s + m.trucks.length, 0)}</td>`}
+        <td>${isA1 ? a1Summary(r) : a2Summary(r)}</td><td>${statusPill(r.status)}</td>
+        <td class="acts">${reportActions(kind, r)}</td></tr>`; }).join('')}</tbody></table></div>`
+      : `<div class="empty"><h3>No reports found</h3><p>${all(isA1 ? 'a1reports' : 'a2reports').length ? 'No reports match these filters.' : 'Create the first report to start tracking.'}</p>${S.readOnly ? '' : `<a class="btn primary" href="#/${kind}/new">${ICON.plus}New report</a>`}</div>`;
+  };
+  draw();
+  $('#lq').oninput = e => { f.q = e.target.value; draw(); };
+  $('#ls').onchange = e => { f.status = e.target.value; draw(); };
+}
+const viewA1List = () => viewReportList('a1');
+const viewA2List = () => viewReportList('a2');
+
+/* global click delegation for list pages */
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-act]');
+  if (btn && !btn.closest('#modal-root')) {
+    const act = btn.dataset.act;
+    if (['delrep'].includes(act)) { e.stopPropagation(); return listAction(btn); }
+    if (act === 'sample') { btn.disabled = true; try { await loadSample(); toast('Sample data loaded'); route(); } catch (er) { toast(writeErr(er)); btn.disabled = false; } return; }
+  }
+  const tr = e.target.closest('tr[data-open]');
+  if (tr && !e.target.closest('a,button,input,select')) go(tr.dataset.open);
+});
+
+/* ---------------- charts (inline SVG, workbook style) ---------------- */
+function wrapLabel(t, max = 13) {
+  const words = String(t || '').split(/\s+/).filter(Boolean), lines = [];
+  let cur = '';
+  words.forEach(w => { if ((cur + ' ' + w).trim().length > max && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); });
+  if (cur) lines.push(cur);
+  if (lines.length > 3) { lines.length = 3; lines[2] += '…'; }
+  return lines;
+}
+function niceMax(v) {
+  if (!(v > 0)) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p;
+  const m = [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find(x => n <= x + 1e-9);
+  return m * p;
+}
+/* grouped vertical columns: series = [{ name, cls, values }] */
+function columnChart({ cats, series, yLabel, fmtV = v => fmt(v), title, wide }) {
+  const W = wide ? 980 : 600, H = wide ? 360 : 340, L = 62, R = 14, T = 18, B = 92;
+  const pw = W - L - R, ph = H - T - B;
+  const all = series.flatMap(x => x.values).filter(v => v !== null && isFinite(v));
+  const raw = Math.max(0, ...all) * 1.12 || 1;
+  const p10 = Math.pow(10, Math.floor(Math.log10(raw / 5)));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * p10).find(st => raw / st <= 6);
+  const nT = Math.ceil(raw / step), max = nT * step;
+  const y = v => T + ph - (v / max) * ph;
+  const gw = pw / Math.max(1, cats.length), n = series.length;
+  const bw = Math.min(wide ? 56 : 42, (gw * 0.7) / n);
+  let g = '';
+  for (let k = 0; k <= nT; k++) { const v = step * k, yy = y(v); g += `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" class="ch-grid"/><text x="${L - 8}" y="${yy + 4}" text-anchor="end" class="ch-tick">${fmtTick(v)}</text>`; }
+  cats.forEach((c, i) => {
+    const cx = L + gw * i + gw / 2, x0 = cx - (bw * n) / 2;
+    series.forEach((sr, j) => {
+      const v = sr.values[i], x = x0 + j * bw + 2;
+      if (v === null || !isFinite(v)) { g += `<text x="${x + (bw - 4) / 2}" y="${y(0) - 6}" text-anchor="middle" class="ch-val">—</text>`; return; }
+      g += `<rect x="${x}" y="${y(v)}" width="${bw - 4}" height="${Math.max(0, y(0) - y(v))}" class="${sr.cls}"><title>${esc(c)}: ${esc(sr.name)} ${fmtV(v)}</title></rect>`;
+      g += `<text x="${x + (bw - 4) / 2}" y="${y(v) - 5}" text-anchor="middle" class="ch-val">${fmtV(v)}</text>`;
+    });
+    wrapLabel(c).forEach((ln, li) => { g += `<text x="${cx}" y="${T + ph + 18 + li * 14}" text-anchor="middle" class="ch-cat">${esc(ln)}</text>`; });
+  });
+  g += `<line x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}" class="ch-axis"/>`;
+  g += `<text transform="translate(16 ${T + ph / 2}) rotate(-90)" text-anchor="middle" class="ch-axlabel">${esc(yLabel)}</text>`;
+  let lx = L; const ly = H - 14;
+  series.forEach(sr => { g += `<rect x="${lx}" y="${ly - 9}" width="11" height="11" class="${sr.cls}"/><text x="${lx + 16}" y="${ly}" class="ch-leg">${esc(sr.name)}</text>`; lx += 24 + sr.name.length * 6.6; });
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${g}</svg>`;
+}
+function fmtTick(v) { return Math.abs(v) >= 100 || Number.isInteger(v) ? String(Math.round(v * 100) / 100) : v.toFixed(1); }
+/* horizontal % bars with optional 100% reference */
+function percentBars({ cats, values, title, statuses }) {
+  const rowH = 46, W = 600, L = 132, R = 72, T = 14, B = 34;
+  const H = T + B + rowH * Math.max(1, cats.length), pw = W - L - R;
+  const vmax = Math.max(0, ...values.filter(v => v !== null && isFinite(v)));
+  const max = vmax <= 100 ? 100 : Math.ceil((vmax * 1.08) / 25) * 25;
+  const x = v => L + (Math.min(v, max) / max) * pw;
+  let g = '';
+  const ticks = []; for (let t = 0; t <= max + 1e-9; t += max > 150 ? 50 : 25) ticks.push(t);
+  ticks.forEach(t => { g += `<line x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${H - B}" class="ch-grid"/><text x="${x(t)}" y="${H - B + 18}" text-anchor="middle" class="ch-tick">${fmt(t, t % 1 ? 1 : 0)}%</text>`; });
+  cats.forEach((c, i) => {
+    const yc = T + rowH * i + rowH / 2, v = values[i];
+    const lines = wrapLabel(c, 16);
+    lines.forEach((ln, li) => { g += `<text x="${L - 10}" y="${yc + 4 + (li - (lines.length - 1) / 2) * 13}" text-anchor="end" class="ch-cat">${esc(ln)}</text>`; });
+    if (v === null || !isFinite(v)) { g += `<text x="${L + 6}" y="${yc + 4}" class="ch-val">Pending input</text>`; return; }
+    const st = statuses ? statuses[i] : null;
+    g += `<rect x="${L}" y="${yc - 11}" width="${Math.max(1, x(v) - L)}" height="22" rx="2" class="${st === 'Unsatisfactory' ? 'ch-s1 below' : 'ch-s1'}"><title>${esc(c)}: ${fmt(v)}%</title></rect>`;
+    g += `<text x="${x(v) + 6}" y="${yc + 4}" class="ch-val strong">${fmt(v)}%${st ? (st === 'Satisfactory' ? ' ✓' : ' ✕') : ''}</text>`;
+  });
+  if (statuses) g += `<line x1="${x(100)}" x2="${x(100)}" y1="${T - 4}" y2="${H - B}" class="ch-ref"/><text x="${x(100)}" y="${T - 2}" text-anchor="middle" class="ch-reflab">100% = recommended average</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${g}</svg>`;
+}
+function chartCard(title, sub, svg) { return `<figure class="chart-card"><figcaption><b>${esc(title)}</b>${sub ? `<span>${esc(sub)}</span>` : ''}</figcaption>${svg}</figure>`; }
+
+/* ---------------- output pages (match workbook Output sheets) ---------------- */
+function viewOutput(kind, id) {
+  const isA1 = kind === 'a1', d = S.data[isA1 ? 'a1reports' : 'a2reports'].get(id);
+  if (!d) { page(`<div class="empty"><h3>Report not found</h3><p>It may have been deleted.</p><a class="btn" href="#/">Back to dashboard</a></div>`); return; }
+  const rd = road(d.roadId) || {};
+  const info = (k, v) => `<div class="oi"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  let body = '';
+  if (isA1) {
+    const c = Calc.a1(d), s = c.summary;
+    body = `<div class="out-info">${info('Road Name', esc(rd.roadName || '—'))}${info('Package No.', esc(rd.packageNo || '—'))}${info('Chainage', `${fmtPlain(d.chainageStart)}-${fmtPlain(d.chainageEnd)} m`)}${info('Segment', Calc.n(d.segmentLength) > 0 ? fmtPlain(d.segmentLength) + ' m' : '—')}</div>
+      <div class="out-kpis">
+        <div class="kpi ok"><span class="n">${s.sat}</span><span class="l">✓ Satisfactory</span></div>
+        <div class="kpi bad"><span class="n">${s.uns}</span><span class="l">✕ Unsatisfactory</span></div>
+        ${s.pending ? `<div class="kpi warn"><span class="n">${s.pending}</span><span class="l">Pending input</span></div>` : ''}
+        <div class="kpi"><span class="n">${s.total}</span><span class="l">Layers checked</span></div>
+      </div>
+      <h3 class="out-sec">SUMMARY — COMPACTION CATEGORY BY LAYER</h3>
+      ${d.rows.length ? `<div class="tbl-wrap"><table class="grid ctr resp out-tbl"><thead><tr><th>Layer</th><th>Materials</th><th>Compaction Category</th></tr></thead><tbody>
+        ${d.rows.map((r, i) => `<tr><td class="cell-main">${esc(r.layer || '—')}</td><td>${esc(r.material || '—')}</td><td>${compPill(c.rows[i].status)}</td></tr>`).join('')}
+      </tbody></table></div>
+      <h3 class="out-sec" style="margin-top:22px">CHARTS</h3>
+      <div class="chart-grid">
+        ${chartCard('Recommended vs effective passes', 'Per layer, as per IRC:SP:97 and GPS-VTS data', columnChart({ wide: true, title: 'Recommended average passes and effective passes by layer', yLabel: 'No. of passes', cats: d.rows.map(r => r.layer || '—'), fmtV: v => fmt(v), series: [{ name: 'Recommended Average No. of Passes', cls: 'ch-s1', values: c.rows.map(x => x.avg) }, { name: 'Effective Passes as per GPS-VTS', cls: 'ch-s2', values: c.rows.map(x => x.eff) }] }))}
+      </div>` : '<div class="empty">No layers in this report.</div>'}`;
+  } else {
+    const c = Calc.a2(d);
+    body = `<div class="out-info">${info('Road Name', esc(rd.roadName || '—'))}${info('Package No.', esc(rd.packageNo || '—'))}${info('Materials', d.materials.length)}${info('Trucks tracked', d.materials.reduce((x, m) => x + m.trucks.length, 0))}</div>
+      <div class="out-kpis">
+        <div class="kpi"><span class="n">${fmt(c.dpr)}</span><span class="l">Total DPR quantity (m³)</span></div>
+        <div class="kpi"><span class="n">${fmt(c.vts)}</span><span class="l">Total GPS-VTS quantity (m³)</span></div>
+        <div class="kpi ${c.overall !== null && c.overall < 80 ? 'warn' : 'ok'}"><span class="n">${c.overall === null ? '—' : fmt(c.overall) + '%'}</span><span class="l">Overall implementation</span></div>
+      </div>
+      <h3 class="out-sec">OUTPUT BASED ON VTS DATA</h3>
+      ${d.materials.length ? `<div class="tbl-wrap"><table class="grid ctr resp out-tbl"><thead><tr><th>Material</th><th>Quantity as per DPR (m³)</th><th>Quantity as per GPS - VTS analysis (m³)</th><th>% Implementation</th></tr></thead><tbody>
+        ${d.materials.map((m, i) => { const mc = c.mats[i]; return `<tr><td><span class="cell-main">${esc(m.workItem || '—')}</span><span class="cell-sub">${esc(m.materialType || '')}</span></td><td>${Calc.n(m.dprQty) > 0 ? fmt(Calc.n(m.dprQty)) : '—'}</td><td>${mc.total === null ? '—' : fmt(mc.total)}${mc.partial ? '<span class="pending" style="display:block">partial</span>' : ''}</td><td class="big-num">${mc.pct === null ? '—' : fmt(mc.pct) + '%'}</td></tr>`; }).join('')}
+      </tbody></table></div>
+      <h3 class="out-sec" style="margin-top:22px">CHARTS</h3>
+      <div class="chart-grid">
+        ${chartCard('DPR quantity vs GPS-VTS quantity', 'Per material, compacted volume', columnChart({ title: 'Original quantity as per DPR and quantity as per GPS-VTS analysis by material', yLabel: 'Quantity (m³)', cats: d.materials.map(m => m.workItem || '—'), fmtV: v => fmt(v, 0), series: [{ name: 'Original Quantity As per DPR', cls: 'ch-s1', values: d.materials.map(m => { const q = Calc.n(m.dprQty); return q > 0 ? q : null; }) }, { name: 'Quantity as per GPS - VTS analysis', cls: 'ch-s2', values: c.mats.map(x => x.total) }] }))}
+        ${chartCard('% Implementation', 'GPS-VTS quantity as % of DPR quantity', percentBars({ title: 'Percent implementation by material', cats: d.materials.map(m => m.workItem || '—'), values: c.mats.map(x => x.pct) }))}
+      </div>` : '<div class="empty">No materials in this report.</div>'}
+      <p class="hint" style="margin-top:12px">Note: The truck filling factor may vary as per site conditions and actual carrying capacity, particularly in hilly terrain. It shall be considered as approved by the concerned Engineer/SRRDA.</p>`;
+  }
+  page(`<div class="top"><div><div class="crumbs"><a href="#/">Dashboard</a> / ${isA1 ? 'Annexure I' : 'Annexure II'} / Output</div>
+      <div class="row"><h1>Output based on VTS data</h1>${statusPill(d.status)}</div>
+      <p class="sub">${isA1 ? 'Annexure I: GPS enabled VTS on number of roller passes' : 'Annexure II: GPS enabled VTS for material quantity monitoring'}</p></div>
+      <div class="row no-print"><button class="btn" data-out="back">Back</button><button class="btn" data-out="print">Print</button><button class="btn primary" data-out="export">Export Excel</button></div></div>
+    <section class="panel out-sheet"><div class="out-band"><span>${isA1 ? 'Annexure I' : 'Annexure II'}</span><b>${isA1 ? 'GPS-VTS based determination of number of roller passes' : 'GPS Vehicle Tracking System (VTS) - Material verification'}</b></div><div class="panel-b">${body}</div></section>`);
+  $$('[data-out]', main()).forEach(b => b.onclick = () => {
+    const a = b.dataset.out;
+    if (a === 'back') { if (history.length > 1) history.back(); else location.hash = '#/'; }
+    if (a === 'print') { try { window.print(); } catch (e) { toast('Printing is blocked here. Use Export Excel instead.'); } }
+    if (a === 'export') isA1 ? exportA1(d) : exportA2(d);
+  });
+}
+
+/* ---------------- roads ---------------- */
+function viewRoads() {
+  const usage = id => all('a1reports').filter(r => r.roadId === id).length + all('a2reports').filter(r => r.roadId === id).length;
+  const rows = all('roads').sort((a, b) => a.roadName.localeCompare(b.roadName));
+  page(`<div class="top"><div><h1>Roads</h1><p class="sub">Road projects and packages that reports are recorded against.</p></div>
+    ${S.readOnly ? '' : `<button class="btn primary" id="add-road">${ICON.plus}Add road</button>`}</div>
+    <div class="panel">
+    ${rows.length ? `<div class="tbl-wrap"><table class="grid resp"><thead><tr><th>Road name</th><th>Package no.</th><th>PIU / site</th><th class="num">Reports</th><th>Remarks</th><th></th></tr></thead><tbody>
+    ${rows.map(r => { const u = usage(r.id); return `<tr><td class="cell-main">${esc(r.roadName)}</td><td>${esc(r.packageNo)}</td><td>${esc(r.piu || '—')}</td><td class="num">${u}</td>
+      <td class="cell-sub">${esc(r.remarks || '')}</td>
+      <td class="acts">${S.readOnly ? '' : `<button class="btn sm" data-road="edit" data-id="${r.id}">Edit</button>
+      <button class="btn sm ghost danger" data-road="del" data-id="${r.id}" ${u ? 'disabled title="Used by reports. Delete those reports first."' : ''}>Delete</button>`}</td></tr>`; }).join('')}
+    </tbody></table></div>` : `<div class="empty"><h3>No roads yet</h3><p>Add a road and package number so reports can be recorded against it.</p>${S.readOnly ? '' : '<button class="btn primary" data-road="add">Add road</button>'}</div>`}</div>`);
+  const add = $('#add-road'); if (add) add.onclick = () => roadForm();
+  $$('[data-road]').forEach(b => b.onclick = async () => {
+    const id = b.dataset.id, act = b.dataset.road, r = road(id);
+    try {
+      if (act === 'add') return roadForm();
+      if (act === 'edit') return roadForm(r);
+      if (act === 'del') { if (await confirmDlg({ title: 'Delete road?', body: `<b>${esc(r.roadName)}</b> will be permanently deleted.`, ok: 'Delete road', danger: true })) { await remove('roads', id); toast('Road deleted'); viewRoads(); } }
+    } catch (e) { toast(writeErr(e)); }
+  });
+}
+function roadForm(r, onSaved) {
+  const d = r ? clone(r) : { id: 'road-' + uid(), roadName: '', packageNo: '', piu: '', remarks: '' };
+  const el = openModal(`<div class="dlg-h"><h2>${r ? 'Edit road' : 'Add road'}</h2></div>
+    <div class="dlg-b"><div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="fld wide"><label for="f-rn">Road name<span class="req">*</span></label><input class="txt" id="f-rn" value="${esc(d.roadName)}" placeholder="e.g. MRL01-Baghon - Seria Road">${errSpan('rn')}</div>
+      <div class="fld"><label for="f-pk">Package no.<span class="req">*</span></label><input class="txt" id="f-pk" value="${esc(d.packageNo)}" placeholder="e.g. UP10118">${errSpan('pk')}</div>
+      <div class="fld"><label for="f-piu">PIU / site</label><input class="txt" id="f-piu" value="${esc(d.piu)}"></div>
+      <div class="fld wide"><label for="f-rm">Remarks</label><textarea class="txt" id="f-rm" rows="2">${esc(d.remarks)}</textarea></div>
+    </div></div>
+    <div class="dlg-f"><button class="btn" data-cancel>Cancel</button><button class="btn primary" data-ok>${r ? 'Save changes' : 'Add road'}</button></div>`);
+  el.querySelector('[data-cancel]').onclick = closeModal;
+  el.querySelector('[data-ok]').onclick = async () => {
+    d.roadName = $('#f-rn').value.trim(); d.packageNo = $('#f-pk').value.trim(); d.piu = $('#f-piu').value.trim(); d.remarks = $('#f-rm').value.trim();
+    const errs = {};
+    if (!d.roadName) errs.rn = 'Enter the road name';
+    if (!d.packageNo) errs.pk = 'Enter the package number';
+    else if (all('roads').some(x => x.id !== d.id && x.packageNo.toLowerCase() === d.packageNo.toLowerCase())) errs.pk = 'Another road already uses this package number';
+    ['rn', 'pk'].forEach(k => { el.querySelector(`[data-err="${k}"]`).textContent = errs[k] || ''; el.querySelector(k === 'rn' ? '#f-rn' : '#f-pk').classList.toggle('bad', !!errs[k]); });
+    if (Object.keys(errs).length) return;
+    const t = nowISO(); d.updatedAt = t; if (!r) d.createdAt = t;
+    try { await put('roads', d); closeModal(); toast(r ? 'Road updated' : 'Road added'); if (onSaved) onSaved(d); else viewRoads(); }
+    catch (e) { toast(writeErr(e)); }
+  };
+}
+
+/* ---------------- editor shared ---------------- */
+function editorTop(kind, title, crumbsLabel) {
+  const d = E.doc, ro = E.readonly;
+  const exportBtns = E.id !== 'new' ? `<a class="btn" href="#/${kind}/${E.id}/output">View output</a><button class="btn" data-ed="export">Export Excel</button><button class="btn" data-ed="print">Print</button>` : '';
+  let acts = '';
+  if (!ro) acts = `<button class="btn" data-ed="save">Save draft</button><button class="btn primary" data-ed="finalize">Finalize</button>`;
+  else if (!S.readOnly) acts = `<button class="btn danger" data-ed="delete">Delete</button><button class="btn primary" data-ed="reopen">Edit report</button>`;
+  if (!ro && E.id !== 'new') acts = `<button class="btn danger" data-ed="delete">Delete</button>` + acts;
+  return `<div class="top"><div><div class="crumbs"><a href="#/${kind}">${crumbsLabel}</a> / ${E.id === 'new' ? 'New report' : (E.readonly ? 'View report' : 'Edit report')}</div>
+    <div class="row"><h1>${esc(title)}</h1>${statusPill(d.status)}<span id="dirty" class="hint"></span></div></div>
+    <div class="row no-print">${exportBtns}${acts}</div></div>
+    ${d.status === 'FINALIZED' ? '<div class="banner ok no-print">This report is finalized and locked. Click <b>Edit report</b> to change it; it goes back to draft until you finalize it again.</div>' : ''}
+    ${S.readOnly ? '<div class="banner warn no-print">You have view-only access to this data.</div>' : ''}`;
+}
+function markDirty() { if (E.readonly) return; E.dirty = true; const el = $('#dirty'); if (el) el.innerHTML = '<span class="dirty-dot"></span>Unsaved changes'; }
+function roadSelect(cur, ro) {
+  const roads = all('roads').sort((a, b) => a.roadName.localeCompare(b.roadName));
+  return `<select class="sel" data-s="h" data-f="roadId" id="h-roadId" ${ro ? 'disabled' : ''}><option value="">Select road</option>${roads.map(r => opt(r.id, `${r.roadName} (${r.packageNo})`, cur)).join('')}</select>`;
+}
+function hField(key, label, inputHtml, { req, unit, hint, cls = '' } = {}) {
+  return `<div class="fld ${cls}"><label for="h-${key}">${label}${req ? '<span class="req">*</span>' : ''}</label>${inputHtml}${errSpan('h.' + key)}${hint ? `<span class="hint" id="hint-${key}">${hint}</span>` : ''}</div>`;
+}
+function hInput(key, val, ro, unit, type = 'text') {
+  const inputmode = type === 'num' ? ' inputmode="decimal"' : '';
+  const t = type === 'date' ? 'date' : 'text';
+  return `<div class="ctl"><input class="in ${unit ? 'has-unit' : ''}" type="${t}" id="h-${key}" data-s="h" data-f="${key}" value="${esc(val)}"${inputmode} ${ro ? 'readonly' : ''} autocomplete="off">${unit ? `<span class="unit">${unit}</span>` : ''}</div>`;
+}
+function showErrors() {
+  const errs = E.kind === 'a1' ? valA1(E.doc) : valA2(E.doc);
+  $$('[data-err]', main()).forEach(sp => {
+    const k = sp.dataset.err, v = errs[k];
+    const show = v && (!v.req || E.attempted);
+    sp.textContent = show ? v.msg : '';
+    const ctl = sp.parentElement.querySelector('.in,.sel,.txt');
+    if (ctl) ctl.classList.toggle('bad', !!show);
+  });
+  return errs;
+}
+async function editorAction(act) {
+  const kind = E.kind, coll = kind === 'a1' ? 'a1reports' : 'a2reports';
+  const label = kind === 'a1' ? 'Annexure I' : 'Annexure II';
+  if (act === 'save' || act === 'finalize') {
+    const finalize = act === 'finalize';
+    E.attempted = finalize || E.attempted;
+    const errs = kind === 'a1' ? valA1(E.doc) : valA2(E.doc);
+    const blk = blocking(errs, finalize);
+    if (blk.length) {
+      if (!finalize) { E.attempted = true; }
+      showErrors();
+      toast(finalize ? `Complete ${blk.length} highlighted field${blk.length === 1 ? '' : 's'} before finalizing` : 'Fix the highlighted fields to save');
+      const first = $$('.bad', main())[0]; if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); first.focus({ preventScroll: true }); }
+      return;
+    }
+    if (finalize && !(await confirmDlg({ title: 'Finalize this report?', body: 'All values will be recalculated and locked. You can reopen it later with Edit report if changes are needed.', ok: 'Finalize report' }))) return;
+    const d = clone(E.doc), t = nowISO(), isNew = E.id === 'new';
+    const newPkg = String(d.packageNo || '').trim(); delete d.packageNo;
+    const rdx = road(d.roadId);
+    if (rdx && newPkg && rdx.packageNo !== newPkg) { try { await put('roads', Object.assign(clone(rdx), { packageNo: newPkg, updatedAt: t })); } catch (e) { toast(writeErr(e)); return; } }
+    if (isNew) { d.id = kind + '-' + uid(); d.createdAt = t; }
+    d.updatedAt = t;
+    d.history = (d.history || []).concat(isNew ? [{ action: 'Created', at: t }] : []).concat(finalize ? [{ action: 'Finalized', at: t }] : (isNew ? [] : [{ action: 'Draft saved', at: t }]));
+    if (finalize) d.status = 'FINALIZED';
+    /* store a calculated snapshot alongside the raw inputs */
+    d.calcSnapshot = kind === 'a1' ? Calc.a1(d).summary : (() => { const c = Calc.a2(d); return { overall: c.overall, dpr: c.dpr, vts: c.vts }; })();
+    try {
+      await put(coll, d);
+      E.dirty = false;
+      toast(finalize ? 'Report finalized' : 'Draft saved');
+      E = null;
+      location.hash = `#/${kind}`;
+    } catch (e) { toast(writeErr(e)); }
+    return;
+  }
+  if (act === 'delete') {
+    const what = E.doc.status === 'DRAFT' ? 'draft' : 'finalized report';
+    if (await confirmDlg({ title: `Delete this ${what}?`, body: `This ${what} will be permanently deleted. This cannot be undone.`, ok: 'Delete report', danger: true })) {
+      try { await remove(coll, E.id); E.dirty = false; toast('Report deleted'); location.hash = `#/${kind}`; } catch (e) { toast(writeErr(e)); }
+    }
+    return;
+  }
+  if (act === 'reopen') {
+    if (!(await confirmDlg({ title: 'Edit this finalized report?', body: 'The report will go back to <b>Draft</b> so you can change it. Finalize it again when you are done. This is recorded in the activity history.', ok: 'Edit report' }))) return;
+    try { await setReportStatus(kind, E.id, 'DRAFT', 'Reopened for editing'); toast('Report reopened as draft'); E = null; route(); } catch (e) { toast(writeErr(e)); }
+    return;
+  }
+  if (act === 'export') { if (E.dirty) toast('Exporting the values shown, including unsaved edits'); return kind === 'a1' ? exportA1(E.doc) : exportA2(E.doc); }
+  if (act === 'print') { try { window.print(); } catch (e) { toast('Printing is blocked here. Use Export Excel instead.'); } return; }
+}
+function histLine(d) {
+  const h = d.history || [];
+  if (!h.length) return '';
+  return `<div class="panel"><div class="panel-h"><h3>Activity</h3></div><div class="panel-b"><div class="hist">${h.slice().reverse().map(x => `<span><b style="color:var(--ink)">${esc(x.action)}</b> ${fmtDateTime(x.at)}</span>`).join('')}</div></div></div>`;
+}
+function moveItem(arr, i, dir) { const j = i + dir; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; }
+
+/* keyboard: Enter moves to the same field in the next row */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' || !E) return;
+  const t = e.target; if (!t.matches || !t.matches('.grid input[data-f]')) return;
+  e.preventDefault();
+  const sel = t.dataset.s === 't' ? `input[data-s="t"][data-i="${t.dataset.i}"][data-f="${t.dataset.f}"]` : `input[data-s="${t.dataset.s}"][data-f="${t.dataset.f}"]`;
+  const list = $$(sel, main()); const k = list.indexOf(t); const nx = list[k + (e.shiftKey ? -1 : 1)];
+  if (nx) { nx.focus(); nx.select(); }
+});
+
+/* ---------------- Annexure I editor ---------------- */
+function newA1() {
+  return { id: 'new', roadId: '', chainageStart: '', chainageEnd: '', segmentLength: '', status: 'DRAFT', remarks: '', rows: [], history: [] };
+}
+function openA1(id) {
+  if (!(E && E.kind === 'a1' && E.id === id)) {
+    let doc;
+    if (id === 'new') { doc = newA1(); doc.rows = [blankA1Row()]; }
+    else { const src = S.data.a1reports.get(id); if (!src) { page(`<div class="empty"><h3>Report not found</h3><p>It may have been deleted.</p><a class="btn" href="#/a1">Back to Annexure I</a></div>`); return; } doc = clone(src); }
+    { const rr = road(doc.roadId); doc.packageNo = rr ? rr.packageNo : ''; }
+    E = { kind: 'a1', id, doc, dirty: false, attempted: false, readonly: S.readOnly || doc.status !== 'DRAFT' };
+  }
+  renderA1();
+}
+const LAYER_ORDER = ['embankment', 'subgrade', 'gsb', 'sub-base', 'base', 'bituminous'];
+const layerRank = l => { const k = LAYER_ORDER.findIndex(o => String(l || '').toLowerCase().startsWith(o)); return k < 0 ? 99 : k; };
+const eqi = (a, b) => String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+function layerOptions() { return all('layers').filter(l => l.active).sort((a, b) => layerRank(a.name) - layerRank(b.name) || a.name.localeCompare(b.name)).map(l => l.name); }
+function materialList() { return all('materials').filter(m => m.active).sort((a, b) => a.name.localeCompare(b.name)); }
+/* Pass rule for a row: a layer-specific rule wins, otherwise the material's own values */
+function resolveRule(layer, material) {
+  if (!material) return null;
+  const ex = layer ? all('passRules').find(x => x.active && eqi(x.layerName, layer) && eqi(x.materialName, material)) : null;
+  if (ex) return { coll: 'passRules', id: ex.id, category: ex.category, passMin: ex.passMin, passMax: ex.passMax, rollers: ex.rollers || [], version: ex.version, source: `${ex.layerName}-specific rule` };
+  const m = all('materials').find(x => eqi(x.name, material));
+  if (m) return { coll: 'materials', id: m.id, category: m.category, passMin: m.passMin, passMax: m.passMax, rollers: m.rollers || [], version: m.version, source: 'material default' };
+  return null;
+}
+function blankA1Row() { return { id: uid(), layer: '', material: '', masterId: '', masterColl: '', category: '', passMin: '', passMax: '', rollers: [], ruleVersion: null, layerWidth: '', rollerWidth: '', rollerTypeVts: '', vtsDistance: '' }; }
+function syncRule(r) {
+  const rule = resolveRule(r.layer, r.material);
+  if (rule) applyRuleToRow(r, rule);
+  else { r.masterId = ''; r.masterColl = ''; r.category = ''; r.passMin = ''; r.passMax = ''; r.rollers = []; r.ruleVersion = null; }
+}
+function ruleDiffers(r, rule) {
+  return String(r.passMin) !== String(rule.passMin) || String(r.passMax) !== String(rule.passMax) || r.category !== rule.category || (r.rollers || []).join('|') !== (rule.rollers || []).join('|');
+}
+function quickAddA1(field, i) {
+  const done = saved => {
+    if (!E || E.kind !== 'a1' || !E.doc.rows[i]) return;
+    const r = E.doc.rows[i]; r[field] = saved.name; syncRule(r); markDirty();
+    drawA1Inputs(`select[data-i="${i}"][data-f="${field}"]`); refreshA1();
+  };
+  return field === 'layer' ? layerForm(null, done) : materialForm(null, done);
+}
+function renderA1() {
+  const d = E.doc, ro = E.readonly;
+  const rd = road(d.roadId);
+  page(`${editorTop('a1', rd ? rd.roadName : 'New roller-pass report', 'Annexure I')}
+  <div class="panel"><div class="panel-h"><h2>Road and segment</h2><span class="spacer"></span><div class="legend no-print"><span><i class="y"></i>Enter value</span><span><i class="o"></i>Choose from list</span><span><i class="g"></i>Calculated</span></div></div>
+    <div class="panel-b"><div class="form-grid">
+      ${hField('roadId', 'Road', `<div class="row" style="flex-wrap:nowrap">${roadSelect(d.roadId, ro)}${ro ? '' : '<button class="btn sm no-print" data-ed="newroad" title="Add a new road">New</button>'}</div>`, { req: 1, cls: 'wide' })}
+      ${hField('packageNo', 'Package no.', hInput('packageNo', d.packageNo ?? (rd ? rd.packageNo : ''), ro || !rd), { req: 1 })}
+      ${hField('chainageStart', 'Chainage start', hInput('chainageStart', d.chainageStart, ro, 'm', 'num'), { req: 1 })}
+      ${hField('chainageEnd', 'Chainage end', hInput('chainageEnd', d.chainageEnd, ro, 'm', 'num'), { req: 1 })}
+      ${hField('segmentLength', 'Segment length', hInput('segmentLength', d.segmentLength, ro, 'm', 'num'), { req: 1, hint: ' ' })}
+      ${hField('remarks', 'Remarks', `<input class="txt" data-s="h" data-f="remarks" id="h-remarks" value="${esc(d.remarks)}" ${ro ? 'readonly' : ''}>`, { cls: 'wide' })}
+    </div></div></div>
+
+  <div class="panel"><div class="panel-h"><h2>Layer inputs and calculations</h2><p class="sub">GPS-VTS based determination of number of roller passes, in the workbook's column order</p><span class="spacer"></span><span id="a1-sumpill"></span></div>
+    <div class="tbl-wrap" id="a1-inputs"></div>
+    ${ro ? '' : `<div class="panel-b no-print" style="border-top:1px solid var(--line-2)"><div class="row"><button class="btn" data-ed="addrow">${ICON.plus}Add layer</button>${errSpan('rows')}</div></div>`}
+  </div>
+
+
+
+  <div class="panel"><div class="panel-h"><h2>Compaction by layer</h2><p class="sub">Cross-section view; bottom layer first as entered. Band width follows layer width.</p></div><div class="panel-b" id="a1-xsec"></div></div>
+
+  <div class="panel"><div class="panel-h"><h3>How values are calculated</h3></div><div class="panel-b formula">
+    Width coverage trips, soil and granular layers: <code>ROUNDUP((Layer width − Roller width) ÷ (Roller width × 2/3) + 1)</code> (1/3 roller-width overlap)<br>
+    Width coverage trips, bituminous layers: <code>ROUNDUP((Layer width − Roller width) ÷ (Roller width − 0.075) + 1)</code> (75 mm overlap)<br>
+    Effective passes: <code>VTS distance ÷ (Segment length × Width coverage trips)</code><br>
+    Recommended average passes: midpoint of the IRC:SP:97-2013 range. Unsatisfactory when effective passes are below this average.<br>
+    Trips are at least 1. Rows with missing inputs show “Pending input” instead of a number.
+  </div></div>
+  <div class="panel"><div class="panel-h"><h3>Notes</h3></div><div class="panel-b formula">
+    1. Roller overlap requirements for Embankment, Subgrade, Sub-base/Base and Bituminous layers have been considered as per IRC:SP:97-2013, with 1/3rd of roller width for granular/soil layers and a minimum 75 mm overlap for bituminous layers.<br>
+    2. The recommended number of roller passes has been considered as per IRC:SP:97-2013.<br>
+    3. If the actual/effective number of passes is less than the recommended average number of passes, the result shall be Unsatisfactory; otherwise, it shall be Satisfactory. For example, if actual passes = 3.75 and recommended average passes = 5, the result is Unsatisfactory.
+  </div></div>
+  ${ro ? '' : `<div class="sticky-actions no-print"><div class="row"><span class="hint" id="dirty2">Changes recalculate instantly. Save to keep them.</span><span class="spacer"></span><button class="btn" data-ed="save">Save draft</button><button class="btn primary" data-ed="finalize">Finalize</button></div></div>`}`);
+  main().firstElementChild.classList.toggle('view', E.readonly);
+  drawA1Inputs(); refreshA1();
+  if (E.dirty) markDirty();
+  bindEditor();
+}
+function drawA1Inputs(focusSel) {
+  const d = E.doc, ro = E.readonly;
+  if (!d.rows.length) {
+    $('#a1-inputs').innerHTML = `<div class="empty"><h3>No layers yet</h3><p>Add the layers compacted in this segment, such as embankment, subgrade, GSB, base and bituminous.</p></div>`;
+    return;
+  }
+  const layers = layerOptions(), mats = materialList();
+  const CAT = { soil: 'Soil', granular: 'Granular', bituminous: 'Bituminous', other: 'Other' };
+  const C = (k, i, cls = '') => `<td class="c ${cls}" data-c1="${k}-${i}"></td>`;
+  const W = ro ? { l: 110, m: 140, n: 64, rl: 130, t: 110, rg: 72, cat: 128 } : { l: 150, m: 152, n: 66, rl: 146, t: 100, rg: 100, cat: 124 };
+  const th = (label, w, cls = '', title = '') => `<th class="${cls}" style="min-width:${w}px" ${title ? `title="${esc(title)}"` : ''}>${label}</th>`;
+  $('#a1-inputs').innerHTML = `<table class="grid a1-combined"><thead>
+    <tr class="grp-row"><th colspan="4" class="grp">Layer</th><th colspan="4" class="grp">Roller</th><th colspan="2" class="grp">VTS data</th><th colspan="3" class="grp">IRC:SP:97 compaction check</th>${ro ? '' : '<th class="grp no-print"></th>'}</tr>
+    <tr>${th('#', 28)}${th('Layer', W.l)}${th('Material', W.m)}${th('Layer Width <span class="unit-h">(m)</span>', W.n + 6, 'num', 'Layer Width (m)')}
+    ${th('Roller Width as per GPS/VTS data <span class="unit-h">(m)</span>', W.n + 24, 'num', 'Roller Width as per GPS/VTS data (m)')}${th('No. of Roller Trips Required for Width Coverage', 86, 'num calc-h', 'No. of Roller Trips Required for Width Coverage')}${th('Recommended Roller', W.rl, ro ? 'calc-h' : '', 'Recommended Roller')}${th('Type of Roller (as per VTS Data)', W.t, '', 'Type of Roller (as per VTS Data)')}
+    ${th('Distance Covered as per VTS Data <span class="unit-h">(m)</span>', 88, 'num', 'Distance Covered as per VTS Data (m)')}${th('Effective Passes', 74, 'num calc-h', 'Effective Passes = VTS Distance Covered ÷ (Length of Segment × Width Coverage Trips/Cycle)')}
+    ${th('Recommended No. of Passes as per IRC:SP:97', W.rg + 8, 'num' + (ro ? ' calc-h' : ''), 'Recommended No. of Passes as per IRC:SP:97 (min–max)')}${th('Recommended Average No. of Passes', 86, 'num calc-h', 'Recommended Average No. of Passes')}${th('Compaction Category', W.cat, 'calc-h')}
+    ${ro ? '' : th('', 78, 'no-print')}</tr></thead><tbody>
+  ${d.rows.map((r, i) => {
+    const ls = layers.slice(); if (r.layer && !ls.some(x => eqi(x, r.layer))) ls.push(r.layer);
+    let matOpts = mats.map(m => opt(m.name, m.name, r.material)).join('');
+    if (r.material && !mats.some(m => eqi(m.name, r.material))) matOpts += opt(r.material, r.material, r.material);
+    const num = (f, ph) => ro ? `<span class="ro-val">${esc(r[f] === '' ? '—' : r[f])}</span>` : `<input class="in" data-s="r" data-i="${i}" data-f="${f}" value="${esc(r[f])}" inputmode="decimal" placeholder="${ph || ''}" aria-label="${FIELD_LABEL[f] || f} row ${i + 1}">${errSpan(`r.${i}.${f}`)}`;
+    const addNew = label => ro ? '' : `<option disabled>──────────</option><option value="__new__">+ Add new ${label}…</option>`;
+    if (ro) return `<tr><td class="idx">${i + 1}</td><td class="cell-main ro-cell">${esc(r.layer || '—')}</td><td class="ro-cell">${esc(r.material || '—')}<div data-c1="mat-${i}"></div></td>
+      <td class="num ro-cell">${num('layerWidth')}</td><td class="num ro-cell">${num('rollerWidth')}</td>${C('trips', i, 'num big-num')}${C('rollers', i, 'small')}
+      <td class="ro-cell">${esc(r.rollerTypeVts || '—')}</td><td class="num ro-cell">${num('vtsDistance')}</td>${C('eff', i, 'num big-num')}${C('range', i, 'num')}${C('avg', i, 'num')}${C('cat', i)}</tr>`;
+    return `<tr><td class="idx">${i + 1}</td>
+      <td><select class="sel" data-s="r" data-i="${i}" data-f="layer" ${ro ? 'disabled' : ''} aria-label="Layer row ${i + 1}"><option value="">Select layer</option>${ls.map(l => opt(l, l, r.layer)).join('')}${addNew('layer')}</select>${errSpan(`r.${i}.layer`)}</td>
+      <td><select class="sel" data-s="r" data-i="${i}" data-f="material" ${ro ? 'disabled' : ''} aria-label="Material row ${i + 1}"><option value="">Select material</option>${matOpts}${addNew('material')}</select>${errSpan(`r.${i}.material`)}<div data-c1="mat-${i}"></div></td>
+      <td>${num('layerWidth')}</td><td>${num('rollerWidth')}</td>
+      ${C('trips', i, 'num big-num')}
+      <td><textarea class="in small-in" rows="${Math.max(1, (r.rollers || []).length)}" data-s="r" data-i="${i}" data-f="rollersText" aria-label="Recommended roller row ${i + 1}" placeholder="comma separated">${esc((r.rollers || []).join(', '))}</textarea></td>
+      <td><input class="in" data-s="r" data-i="${i}" data-f="rollerTypeVts" value="${esc(r.rollerTypeVts)}" ${ro ? 'readonly' : ''} placeholder="optional" aria-label="Roller type row ${i + 1}"></td>
+      <td>${num('vtsDistance')}</td>
+      ${C('eff', i, 'num big-num')}
+      <td><div class="pass-in"><input class="in" data-s="r" data-i="${i}" data-f="passMin" value="${esc(r.passMin ?? '')}" inputmode="decimal" aria-label="Recommended passes minimum row ${i + 1}"><span>–</span><input class="in" data-s="r" data-i="${i}" data-f="passMax" value="${esc(r.passMax ?? '')}" inputmode="decimal" aria-label="Recommended passes maximum row ${i + 1}"></div>${errSpan(`r.${i}.passMin`)}${errSpan(`r.${i}.passMax`)}</td>
+      ${C('avg', i, 'num')}${C('cat', i)}
+      ${ro ? '' : `<td class="acts no-print"><button class="icon-btn" data-ed="up" data-i="${i}" title="Move up" aria-label="Move row ${i + 1} up" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button><button class="icon-btn" data-ed="down" data-i="${i}" title="Move down" aria-label="Move row ${i + 1} down" ${i === d.rows.length - 1 ? 'disabled' : ''}>${ICON.down}</button><button class="icon-btn del" data-ed="delrow" data-i="${i}" title="Remove layer" aria-label="Remove row ${i + 1}">${ICON.x}</button></td>`}</tr>`;
+  }).join('')}</tbody></table>`;
+  if (focusSel) { const f = $(focusSel, main()); if (f) f.focus(); }
+}
+function refreshA1() {
+  const d = E.doc, c = Calc.a1(d), seg = Calc.n(d.segmentLength);
+  // chainage hint
+  const cs = Calc.n(d.chainageStart), ce = Calc.n(d.chainageEnd), hint = $('#hint-segmentLength');
+  if (hint) {
+    const span = (cs !== null && ce !== null && !isNaN(cs) && !isNaN(ce) && ce >= cs) ? ce - cs : null;
+    if (span !== null && span > 0 && span !== seg) hint.innerHTML = `Chainage span is ${fmtPlain(span)} m.${E.readonly ? '' : ' <button class="linkish" data-ed="usespan">Use it</button>'}`;
+    else if (span !== null && span === seg) hint.textContent = 'Matches the chainage span.';
+    else hint.textContent = '';
+  }
+  // calculated cells in the combined table
+  const setC = (k, html) => { const el = $(`[data-c1="${k}"]`, main()); if (el) el.innerHTML = html; };
+  d.rows.forEach((r, i) => {
+    const rc = c.rows[i];
+    const miss = rc.missing.map(k => FIELD_LABEL[k]);
+    if (!r.layer || !r.material) miss.unshift('layer and material');
+    if (!(seg > 0)) miss.push('segment length');
+    const pend = miss.length ? 'Pending input: ' + miss.join(', ') : (Object.keys(rc.errors).length ? 'Fix input errors' : 'Pending input');
+    const cur = (!E.readonly && r.material) ? resolveRule(r.layer, r.material) : null;
+    const stale = cur && !r.ruleOverridden && ruleDiffers(r, cur);
+    const edited = cur && r.ruleOverridden && ruleDiffers(r, cur);
+    setC(`mat-${i}`, `${stale ? `<div class="cell-sub no-print" style="color:var(--warn)">Pass rule changed in settings. <button class="linkish" data-ed="refreshrule" data-i="${i}">Apply latest</button></div>` : ''}${edited ? `<div class="cell-sub no-print" style="color:var(--warn)">Roller/passes edited. <button class="linkish" data-ed="refreshrule" data-i="${i}">Reset to master</button></div>` : ''}`);
+    setC(`trips-${i}`, rc.trips ?? '—');
+    setC(`rollers-${i}`, (r.rollers || []).length ? r.rollers.map(esc).join('<br>') : '—');
+    setC(`eff-${i}`, rc.eff === null ? '—' : fmt(rc.eff));
+    setC(`range-${i}`, r.passMin !== '' && r.passMin != null ? `${r.passMin}–${r.passMax}` : '—');
+    setC(`avg-${i}`, rc.avg === null ? '—' : fmt(rc.avg, 1));
+    setC(`cat-${i}`, compPill(rc.status, pend));
+  });
+  const s = c.summary;
+  $('#a1-sumpill').innerHTML = s.total ? `<span class="pill ok">✓ ${s.sat} satisfactory</span> <span class="pill bad">✕ ${s.uns} unsatisfactory</span>${s.pending ? ` <span class="pill warn">${s.pending} pending</span>` : ''}` : '';
+  const rdo = road(d.roadId) || {};
+  if ($('#a1-output')) $('#a1-output').innerHTML = `<div class="panel-b" style="padding-bottom:0"><div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))">
+      <div class="kv"><span class="k">Road name</span><span class="v" style="font-size:15px">${esc(rdo.roadName || '—')}</span></div>
+      <div class="kv"><span class="k">Package no.</span><span class="v" style="font-size:15px">${esc(rdo.packageNo || '—')}</span></div>
+      <div class="kv"><span class="k">Chainage</span><span class="v" style="font-size:15px">${chainLabel(d)}</span></div>
+      <div class="kv"><span class="k">Segment</span><span class="v" style="font-size:15px">${seg > 0 ? fmtPlain(d.segmentLength) + ' m' : '—'}</span></div></div></div>
+    ${d.rows.length ? `<div class="tbl-wrap" style="margin-top:12px"><table class="grid ctr resp"><thead><tr><th>Layer</th><th>Materials</th><th>Compaction category</th></tr></thead><tbody>
+    ${d.rows.map((r, i) => `<tr><td class="cell-main">${esc(r.layer || '—')}</td><td>${esc(r.material || '—')}</td><td>${compPill(c.rows[i].status)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">The summary appears once layers are added.</div>'}`;
+  $('#a1-xsec').innerHTML = xsection(d, c);
+  showErrors();
+}
+function xsection(d, c) {
+  const rows = d.rows;
+  if (!rows.length) return '<div class="hint">Add layers to see the cross-section.</div>';
+  const widths = rows.map(r => { const w = Calc.n(r.layerWidth); return w > 0 ? w : null; });
+  const maxW = Math.max(...widths.filter(Boolean), 1);
+  const bandH = 40, gap = 3, top = 14, cx = 250, half = 220, W = 960;
+  const H = top + rows.length * (bandH + gap) + 34;
+  let out = `<svg class="xsec" viewBox="0 0 ${W} ${H}" role="img" aria-label="Cross-section of layers with compaction category">`;
+  out += `<line class="cl" x1="${cx}" y1="4" x2="${cx}" y2="${H - 26}"/>`;
+  // bottom layer = first row
+  rows.forEach((r, i) => {
+    const level = i; // 0 at bottom
+    const yBot = H - 30 - level * (bandH + gap);
+    const yTop = yBot - bandH;
+    const w = widths[i] ?? maxW * 0.5;
+    const wTop = Math.max(w - maxW * 0.04, w * 0.9);
+    const hb = (w / maxW) * half, ht = (wTop / maxW) * half;
+    const st = c.rows[i].status;
+    const cls = st === 'Satisfactory' ? 'ok' : st === 'Unsatisfactory' ? 'bad' : 'pend';
+    out += `<polygon class="band ${cls}" points="${cx - hb},${yBot} ${cx + hb},${yBot} ${cx + ht},${yTop} ${cx - ht},${yTop}"/>`;
+    out += `<text x="${cx}" y="${yTop + bandH / 2 + 5}" text-anchor="middle" class="lab">${esc(r.layer || 'Layer ' + (i + 1))}</text>`;
+    const lx = cx + half + 30;
+    out += `<line class="dim" x1="${cx + hb + 4}" y1="${yTop + bandH / 2}" x2="${lx - 6}" y2="${yTop + bandH / 2}"/>`;
+    const eff = c.rows[i].eff, avg = c.rows[i].avg;
+    out += `<text x="${lx}" y="${yTop + 16}" class="lab">${esc(r.material || '—')}${widths[i] ? `, ${fmtPlain(r.layerWidth)} m wide` : ''}</text>`;
+    const stTxt = st ? (st === 'Satisfactory' ? '✓ ' : '✕ ') + st : 'Pending input';
+    out += `<text x="${lx}" y="${yTop + 33}" class="lab2"><tspan class="${cls === 'ok' ? 'st-ok' : cls === 'bad' ? 'st-bad' : 'st-pend'}">${stTxt}</tspan>${eff === null ? '' : `, ${fmt(eff)} effective passes against ${avg === null ? '—' : fmt(avg, 1)} recommended`}</text>`;
+  });
+  out += `<line class="ground" x1="10" y1="${H - 30}" x2="${cx + half + 10}" y2="${H - 30}"/>`;
+  out += `<text x="${cx}" y="${H - 10}" text-anchor="middle" class="lab2">Centre line; widest layer ${fmtPlain(maxW)} m</text>`;
+  return out + '</svg>';
+}
+function applyRuleToRow(r, rule) {
+  r.ruleOverridden = false; r.masterColl = rule.coll || 'passRules'; r.masterId = rule.id; r.category = rule.category; r.passMin = rule.passMin; r.passMax = rule.passMax; r.rollers = (rule.rollers || []).slice(); r.ruleVersion = rule.version;
+}
+
+/* ---------------- Annexure II editor ---------------- */
+function newA2() { return { id: 'new', roadId: '', status: 'DRAFT', remarks: '', materials: [], history: [] }; }
+function materialTypeList() { return all('materialTypes').filter(m => m.active).sort((a, b) => a.name.localeCompare(b.name)); }
+const findMaterialType = name => name ? all('materialTypes').find(x => eqi(x.name, name)) : null;
+function quickAddA2(field, i) {
+  const done = saved => {
+    if (!E || E.kind !== 'a2' || !E.doc.materials[i]) return;
+    const m = E.doc.materials[i];
+    if (field === 'workItem') m.workItem = saved.name;
+    else { m.materialType = saved.name; m.masterId = saved.id; m.ruleVersion = saved.version; m.lcFactor = String(saved.lcFactor); m.lcOverridden = false; }
+    markDirty(); drawA2Mats(`select[data-s="m"][data-i="${i}"][data-f="${field}"]`); refreshA2();
+  };
+  return field === 'workItem' ? layerForm(null, done) : materialTypeForm(null, done);
+}
+function blankTruck(n) { return { id: uid(), name: 'Truck ' + n, capacity: '', fill: '1', distanceKm: '' }; }
+function blankMat() { return { id: uid(), workItem: '', materialType: '', masterId: '', ruleVersion: null, source: '', leadKm: '', unit: 'm3', dprQty: '', lcFactor: '', lcOverridden: false, trucks: [blankTruck(1)] }; }
+function openA2(id) {
+  if (!(E && E.kind === 'a2' && E.id === id)) {
+    let doc;
+    if (id === 'new') { doc = newA2(); doc.materials = [blankMat()]; }
+    else { const src = S.data.a2reports.get(id); if (!src) { page(`<div class="empty"><h3>Report not found</h3><p>It may have been deleted.</p><a class="btn" href="#/a2">Back to Annexure II</a></div>`); return; } doc = clone(src); }
+    { const rr = road(doc.roadId); doc.packageNo = rr ? rr.packageNo : ''; }
+    E = { kind: 'a2', id, doc, dirty: false, attempted: false, readonly: S.readOnly || doc.status !== 'DRAFT' };
+  }
+  renderA2();
+}
+function renderA2() {
+  const d = E.doc, ro = E.readonly, rd = road(d.roadId);
+  page(`${editorTop('a2', rd ? rd.roadName : 'New material-quantity report', 'Annexure II')}
+  <div class="panel"><div class="panel-h"><h2>Report details</h2><span class="spacer"></span><div class="legend no-print"><span><i class="y"></i>Enter value</span><span><i class="o"></i>Choose from list</span><span><i class="g"></i>Calculated</span></div></div>
+    <div class="panel-b"><div class="form-grid">
+      ${hField('roadId', 'Road', `<div class="row" style="flex-wrap:nowrap">${roadSelect(d.roadId, ro)}${ro ? '' : '<button class="btn sm no-print" data-ed="newroad" title="Add a new road">New</button>'}</div>`, { req: 1, cls: 'wide' })}
+      ${hField('packageNo', 'Package no.', hInput('packageNo', d.packageNo ?? (rd ? rd.packageNo : ''), ro || !rd), { req: 1 })}
+      ${hField('remarks', 'Remarks', `<input class="txt" data-s="h" data-f="remarks" id="h-remarks" value="${esc(d.remarks)}" ${ro ? 'readonly' : ''}>`, { cls: 'wide' })}
+    </div></div></div>
+  <div class="top" style="margin:26px 0 12px"><div><h2>Materials and truck trips</h2><p class="sub">One block per material, with the trucks that hauled it as tracked by GPS-VTS.</p></div>${ro ? '' : `<button class="btn no-print" data-ed="addmat">${ICON.plus}Add material</button>`}</div>
+  <div>${errSpan('mats')}</div>
+  <div id="a2-mats"></div>
+  ${ro || !d.materials.length ? '' : `<div class="no-print" style="margin:-4px 0 18px"><button class="btn" data-ed="addmat">${ICON.plus}Add material</button></div>`}
+  <div class="panel"><div class="panel-h"><h3>How values are calculated</h3></div><div class="panel-b formula">
+    Loose quantity required: <code>Compacted DPR quantity × L/C factor</code><br>
+    Trips generated: <code>Distance covered (km) ÷ (2 × Lead distance (km))</code>, assuming GPS-VTS logs the round trip<br>
+    Material brought to site, compacted-equivalent: <code>(Trips × Capacity × Filling factor) ÷ L/C factor</code><br>
+    Implementation: <code>GPS-VTS quantity ÷ DPR quantity × 100</code>. Intermediate values are not rounded.<br>
+    Note: The truck filling factor may vary as per site conditions and actual carrying capacity, particularly in hilly terrain. It shall be considered as approved by the concerned Engineer/SRRDA.<br>
+    L/C factors, their basis and key assumptions are listed in Settings → Layers &amp; materials → Materials (Annexure II).
+  </div></div>
+  ${ro ? '' : `<div class="sticky-actions no-print"><div class="row"><span class="hint">Changes recalculate instantly. Save to keep them.</span><span class="spacer"></span><button class="btn" data-ed="save">Save draft</button><button class="btn primary" data-ed="finalize">Finalize</button></div></div>`}`);
+  main().firstElementChild.classList.toggle('view', E.readonly);
+  drawA2Mats(); refreshA2();
+  if (E.dirty) markDirty();
+  bindEditor();
+}
+function drawA2Mats(focusSel) {
+  const d = E.doc, ro = E.readonly;
+  if (!d.materials.length) { $('#a2-mats').innerHTML = `<div class="panel"><div class="empty"><h3>No materials yet</h3><p>Add each material hauled for this road, such as earthwork, subgrade, GSB and base.</p></div></div>`; return; }
+  const items = layerOptions(), typeNames = materialTypeList().map(x => x.name);
+  const addNew = label => ro ? '' : `<option disabled>──────────</option><option value="__new__">+ Add new ${label}…</option>`;
+  $('#a2-mats').innerHTML = d.materials.map((m, i) => {
+    const wi = items.slice(); if (m.workItem && !wi.some(x => eqi(x, m.workItem))) wi.push(m.workItem);
+    const types = typeNames.slice(); if (m.materialType && !types.some(x => eqi(x, m.materialType))) types.push(m.materialType);
+    const master = S.data.materialTypes.get(m.masterId);
+    const inp = (f, unit, ph) => `<div class="ctl"><input class="in ${unit ? 'has-unit' : ''}" data-s="m" data-i="${i}" data-f="${f}" value="${esc(m[f])}" ${['leadKm', 'dprQty', 'lcFactor'].includes(f) ? 'inputmode="decimal"' : ''} placeholder="${ph || ''}" ${ro ? 'readonly' : ''}>${unit ? `<span class="unit">${unit}</span>` : ''}</div>${errSpan(`m.${i}.${f}`)}`;
+    return `<section class="mat" aria-label="Material ${i + 1}">
+      <div class="mat-h"><span class="no">${i + 1}</span><h3>${esc(m.workItem || 'New material')}${m.materialType ? `: ${esc(m.materialType)}` : ''}</h3><span class="spacer"></span>
+        ${ro ? '' : `<span class="no-print"><button class="icon-btn" data-ed="mup" data-i="${i}" title="Move up" aria-label="Move material up" ${i === 0 ? 'disabled' : ''}>${ICON.up}</button><button class="icon-btn" data-ed="mdown" data-i="${i}" title="Move down" aria-label="Move material down" ${i === d.materials.length - 1 ? 'disabled' : ''}>${ICON.down}</button><button class="icon-btn del" data-ed="delmat" data-i="${i}" title="Remove material" aria-label="Remove material">${ICON.x}</button></span>`}</div>
+      <div class="mat-b"><div class="form-grid" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr))">
+        <div class="fld"><label>Sr. No.</label><input class="txt" readonly tabindex="-1" value="${i + 1}"></div>
+        <div class="fld"><label>Material / work layer<span class="req">*</span></label><select class="sel" data-s="m" data-i="${i}" data-f="workItem" ${ro ? 'disabled' : ''}><option value="">Select work item</option>${wi.map(w => opt(w, w, m.workItem)).join('')}${addNew('layer / work item')}</select>${errSpan(`m.${i}.workItem`)}</div>
+        <div class="fld"><label>Source</label>${inp('source', '', 'e.g. A')}</div>
+        <div class="fld"><label>Lead distance<span class="req">*</span></label>${inp('leadKm', 'km')}</div>
+        <div class="fld"><label>Unit</label>${inp('unit', '', 'm3')}</div>
+        <div class="fld"><label>Quantity as per DPR, compacted<span class="req">*</span></label>${inp('dprQty', 'm³')}</div>
+        <div class="fld"><label>Material type<span class="req">*</span></label><select class="sel" data-s="m" data-i="${i}" data-f="materialType" ${ro ? 'disabled' : ''}><option value="">Select material type</option>${types.map(t => opt(t, t, m.materialType)).join('')}${addNew('material type')}</select>${errSpan(`m.${i}.materialType`)}</div>
+        <div class="fld"><label>L/C factor<span class="req">*</span></label>${inp('lcFactor', '')}<span class="hint" data-lchint="${i}">${master ? (m.lcOverridden ? `Edited. Master value ${master.lcFactor}.${ro ? '' : ` <button class="linkish" data-ed="lcreset" data-i="${i}">Reset</button>`}` : (master.typicalRange ? `From material type list (range ${esc(master.typicalRange)})` : 'From material type list')) : ''}</span></div>
+        <div class="fld"><label>Loose quantity required</label><div class="ctl"><input class="in has-unit" readonly data-calc="loose-${i}" tabindex="-1"><span class="unit">m³</span></div></div>
+      </div>
+      <div class="tbl-wrap" style="margin-top:14px;border:1px solid var(--line);border-radius:8px"><table class="grid ctr"><thead><tr><th style="min-width:120px">Truck</th><th style="min-width:100px">Capacity <span class="unit-h">(m³)</span></th><th style="min-width:100px">Filling factor</th><th class="num">L/C factor</th><th style="min-width:130px">Distance covered as per GPS-VTS <span class="unit-h">(km)</span></th><th class="num">Trips generated</th><th class="num">Brought to site, compacted-equivalent <span class="unit-h">(m³)</span></th>${ro ? '' : '<th class="no-print"></th>'}</tr></thead><tbody>
+        ${m.trucks.map((t, j) => {
+          const ti = (f, im) => `<input class="in" data-s="t" data-i="${i}" data-j="${j}" data-f="${f}" value="${esc(t[f])}" ${im ? 'inputmode="decimal"' : ''} ${ro ? 'readonly' : ''} aria-label="${f} truck ${j + 1}">${errSpan(`t.${i}.${j}.${f}`)}`;
+          return `<tr><td>${ti('name')}</td><td>${ti('capacity', 1)}</td><td>${ti('fill', 1)}</td><td class="num c" data-calc="tlc-${i}-${j}"></td><td>${ti('distanceKm', 1)}</td><td class="num c" data-calc="trips-${i}-${j}"></td><td class="num c big-num" data-calc="qty-${i}-${j}"></td>
+          ${ro ? '' : `<td class="acts no-print"><button class="icon-btn del" data-ed="deltruck" data-i="${i}" data-j="${j}" title="Remove truck" aria-label="Remove truck ${j + 1}">${ICON.x}</button></td>`}</tr>`;
+        }).join('')}
+        ${m.trucks.length ? '' : `<tr><td colspan="8" class="empty" style="padding:16px">No trucks added.</td></tr>`}
+      </tbody></table></div>
+      ${ro ? '' : `<div class="row no-print" style="margin-top:10px"><button class="btn sm" data-ed="addtruck" data-i="${i}">${ICON.plus}Add truck</button>${errSpan(`m.${i}.trucks`)}</div>`}
+      </div>
+      <div class="mat-f"><div class="kv"><span class="k">Total brought to site</span><span class="v" data-calc="total-${i}"></span></div><div class="kv"><span class="k">Quantity as per DPR</span><span class="v" data-calc="dpr-${i}"></span></div><div class="kv"><span class="k">Implementation</span><span class="v" data-calc="pct-${i}"></span></div><span data-calc="note-${i}" class="pending"></span></div>
+    </section>`;
+  }).join('');
+  if (focusSel) { const f = $(focusSel, main()); if (f) f.focus(); }
+}
+function refreshA2() {
+  const d = E.doc, c = Calc.a2(d);
+  const setC = (k, v) => { const el = $(`[data-calc="${k}"]`, main()); if (!el) return; if (el.tagName === 'INPUT') el.value = v; else el.innerHTML = v; };
+  d.materials.forEach((m, i) => {
+    const mc = c.mats[i];
+    setC(`loose-${i}`, mc.loose === null ? '' : fmt(mc.loose));
+    const lc = Calc.n(m.lcFactor);
+    m.trucks.forEach((t, j) => {
+      const tc = mc.trucks[j];
+      setC(`tlc-${i}-${j}`, lc > 0 ? fmtPlain(m.lcFactor) : '—');
+      setC(`trips-${i}-${j}`, tc.trips === null ? '<span class="pending">Pending</span>' : fmt(tc.trips));
+      setC(`qty-${i}-${j}`, tc.qty === null ? '<span class="pending">Pending</span>' : fmt(tc.qty));
+    });
+    setC(`total-${i}`, mc.total === null ? '—' : fmt(mc.total) + ' m³');
+    setC(`dpr-${i}`, Calc.n(m.dprQty) > 0 ? fmt(Calc.n(m.dprQty)) + ' m³' : '—');
+    setC(`pct-${i}`, mc.pct === null ? '—' : fmt(mc.pct) + '%');
+    const miss = [...mc.missing.map(k => FIELD_LABEL[k])];
+    if (mc.partial) miss.push('some truck inputs');
+    setC(`note-${i}`, miss.length ? 'Pending input: ' + miss.join(', ') : '');
+  });
+  if ($('#a2-summary')) $('#a2-summary').innerHTML = d.materials.length ? `<div class="tbl-wrap"><table class="grid ctr resp"><thead><tr><th>Material</th><th class="num">Quantity as per DPR <span class="unit-h">(m³)</span></th><th class="num">Quantity as per GPS-VTS analysis <span class="unit-h">(m³)</span></th><th class="num">Implementation</th></tr></thead><tbody>
+    ${d.materials.map((m, i) => { const mc = c.mats[i]; return `<tr><td><span class="cell-main">${esc(m.workItem || '—')}</span><div class="cell-sub">${esc(m.materialType || '')}</div></td><td class="num">${Calc.n(m.dprQty) > 0 ? fmt(Calc.n(m.dprQty)) : '—'}</td><td class="num c">${mc.total === null ? '—' : fmt(mc.total)}${mc.partial ? '<div class="pending">partial</div>' : ''}</td><td class="num c big-num">${mc.pct === null ? '—' : fmt(mc.pct) + '%'}</td></tr>`; }).join('')}
+    </tbody></table></div>
+    <div class="panel-b" style="border-top:1px solid var(--line-2)"><div class="bars" aria-label="Implementation by material">
+    ${d.materials.map((m, i) => { const p = c.mats[i].pct; return `<div class="bar-row"><span class="cell-main">${esc(m.workItem || 'Material ' + (i + 1))}</span><div class="bar" role="img" aria-label="${p === null ? 'pending' : fmt(p, 1) + ' percent'}"><span class="${p !== null && p < 80 ? 'low' : ''}" style="width:${p === null ? 0 : Math.min(100, Math.max(0, p))}%"></span></div><span class="pct">${p === null ? '—' : fmt(p, 1) + '%'}</span></div>`; }).join('')}
+    </div><p class="hint" style="margin:10px 0 0">Bars show GPS-VTS quantity as a share of DPR quantity. Below 80% is shown in orange.</p></div>` : '<div class="empty">The summary appears once materials are added.</div>';
+  if ($('#a2-overall')) $('#a2-overall').innerHTML = c.overall === null ? '' : `<span class="pill plain">Overall ${fmt(c.overall, 1)}% of DPR quantity</span>`;
+  showErrors();
+}
+
+/* ---------------- editor event binding ---------------- */
+function bindEditor() {
+  const m = main();
+  m.oninput = e => {
+    const t = e.target; if (!E || !t.dataset || !t.dataset.f || t.tagName === 'SELECT' || E.readonly) return;
+    setField(t, t.value);
+  };
+  m.onchange = e => {
+    const t = e.target; if (!E || !t.dataset || !t.dataset.f || E.readonly) return;
+    if (t.tagName === 'SELECT' || t.type === 'date') setField(t, t.value, true);
+  };
+  m.onclick = async e => {
+    const b = e.target.closest('[data-ed]'); if (!b || !E) return;
+    const act = b.dataset.ed, i = Number(b.dataset.i), j = Number(b.dataset.j), d = E.doc;
+    const isA1 = E.kind === 'a1';
+    switch (act) {
+      case 'save': case 'finalize': case 'delete': case 'reopen': case 'export': case 'print': return editorAction(act);
+      case 'newroad': return roadForm(null, rd => { d.roadId = rd.id; d.packageNo = rd.packageNo; markDirty(); isA1 ? renderA1() : renderA2(); });
+      case 'usespan': { const s = Calc.n(d.chainageEnd) - Calc.n(d.chainageStart); d.segmentLength = String(s); $('#h-segmentLength').value = d.segmentLength; markDirty(); return refreshA1(); }
+      case 'addrow': { const r = blankA1Row(); const prev = d.rows[d.rows.length - 1]; if (prev && Calc.n(prev.rollerWidth) > 0) r.rollerWidth = prev.rollerWidth; d.rows.push(r); markDirty(); drawA1Inputs(`select[data-i="${d.rows.length - 1}"][data-f="layer"]`); return refreshA1(); }
+      case 'delrow': { const r = d.rows[i]; const filled = r.layer || r.vtsDistance || r.layerWidth; if (filled && !(await confirmDlg({ title: 'Remove this layer?', body: `Row ${i + 1}${r.layer ? ` (${esc(r.layer)})` : ''} and its inputs will be removed from this report.`, ok: 'Remove layer', danger: true }))) return; d.rows.splice(i, 1); markDirty(); drawA1Inputs(); return refreshA1(); }
+      case 'up': case 'down': moveItem(d.rows, i, act === 'up' ? -1 : 1); markDirty(); drawA1Inputs(`[data-ed="${act}"][data-i="${act === 'up' ? i - 1 : i + 1}"]`); return refreshA1();
+      case 'refreshrule': { const rule = resolveRule(d.rows[i].layer, d.rows[i].material); if (rule) { applyRuleToRow(d.rows[i], rule); markDirty(); drawA1Inputs(); refreshA1(); toast('Latest rule applied to this layer'); } return; }
+      case 'addmat': { d.materials.push(blankMat()); markDirty(); drawA2Mats(`select[data-s="m"][data-i="${d.materials.length - 1}"][data-f="workItem"]`); refreshA2(); return; }
+      case 'delmat': { const mm = d.materials[i]; if (!(await confirmDlg({ title: 'Remove this material?', body: `Material ${i + 1}${mm.workItem ? ` (${esc(mm.workItem)})` : ''} and its ${mm.trucks.length} truck row${mm.trucks.length === 1 ? '' : 's'} will be removed.`, ok: 'Remove material', danger: true }))) return; d.materials.splice(i, 1); markDirty(); drawA2Mats(); return refreshA2(); }
+      case 'mup': case 'mdown': moveItem(d.materials, i, act === 'mup' ? -1 : 1); markDirty(); drawA2Mats(); return refreshA2();
+      case 'addtruck': { const mm = d.materials[i]; const prev = mm.trucks[mm.trucks.length - 1]; const t = blankTruck(mm.trucks.length + 1); if (prev) { t.capacity = prev.capacity; t.fill = prev.fill; } mm.trucks.push(t); markDirty(); drawA2Mats(`input[data-s="t"][data-i="${i}"][data-j="${mm.trucks.length - 1}"][data-f="distanceKm"]`); return refreshA2(); }
+      case 'deltruck': { d.materials[i].trucks.splice(j, 1); markDirty(); drawA2Mats(); return refreshA2(); }
+      case 'lcreset': { const mm = d.materials[i], ms = S.data.materialTypes.get(mm.masterId); if (ms) { mm.lcFactor = String(ms.lcFactor); mm.lcOverridden = false; mm.ruleVersion = ms.version; markDirty(); drawA2Mats(); refreshA2(); } return; }
+    }
+  };
+}
+function setField(t, val, structural) {
+  const d = E.doc, s = t.dataset.s, f = t.dataset.f, i = Number(t.dataset.i), j = Number(t.dataset.j);
+  markDirty();
+  if (E.kind === 'a1') {
+    if (s === 'h') { d[f] = val; if (f === 'roadId') { const rr = road(val); d.packageNo = rr ? rr.packageNo : ''; return renderA1(); } return refreshA1(); }
+    const r = d.rows[i];
+    if (f === 'layer' || f === 'material') {
+      if (val === '__new__') { t.value = r[f] || ''; return quickAddA1(f, i); }
+      r[f] = val; syncRule(r);
+      drawA1Inputs(`select[data-i="${i}"][data-f="${f}"]`); return refreshA1();
+    }
+    if (f === 'rollersText') { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; r.rollers = val.split(/[,\n]/).map(x => x.trim()).filter(Boolean); r.ruleOverridden = true; return refreshA1(); }
+    if (f === 'passMin' || f === 'passMax') { r[f] = val; r.ruleOverridden = true; return refreshA1(); }
+    r[f] = val; return refreshA1();
+  }
+  // Annexure II
+  if (s === 'h') { d[f] = val; if (f === 'roadId') { const rr = road(val); d.packageNo = rr ? rr.packageNo : ''; return renderA2(); } return refreshA2(); }
+  if (s === 'm') {
+    const m = d.materials[i];
+    if (f === 'workItem' || f === 'materialType') {
+      if (val === '__new__') { t.value = m[f] || ''; return quickAddA2(f, i); }
+      m[f] = val;
+      if (f === 'materialType') {
+        const ms = findMaterialType(val);
+        if (ms) { m.masterId = ms.id; m.ruleVersion = ms.version; m.lcFactor = String(ms.lcFactor); m.lcOverridden = false; } else m.masterId = '';
+      }
+      drawA2Mats(`select[data-s="m"][data-i="${i}"][data-f="${f}"]`); return refreshA2();
+    }
+    m[f] = val;
+    if (f === 'lcFactor') {
+      const ms = S.data.materialTypes.get(m.masterId);
+      m.lcOverridden = !!ms && Calc.n(val) !== ms.lcFactor;
+      const h = $(`[data-lchint="${i}"]`, main());
+      if (h && ms) h.innerHTML = m.lcOverridden ? `Edited. Master value ${ms.lcFactor}. <button class="linkish" data-ed="lcreset" data-i="${i}">Reset</button>` : (ms.typicalRange ? `From material type list (range ${esc(ms.typicalRange)})` : 'From material type list');
+    }
+    return refreshA2();
+  }
+  if (s === 't') { d.materials[i].trucks[j][f] = val; return refreshA2(); }
+}
+
+/* ---------------- settings ---------------- */
+const setF = { q: '', inactive: false };
+const a1Rows = () => all('a1reports').flatMap(r => r.rows || []);
+const a2Mats = () => all('a2reports').flatMap(r => r.materials || []);
+const CAT_LABEL = { soil: 'Soil', granular: 'Granular', bituminous: 'Bituminous', other: 'Other' };
+const passCells = r => `<td>${esc(CAT_LABEL[r.category] || r.category)}</td><td class="num">${r.passMin}–${r.passMax}</td><td class="cell-sub">${(r.rollers || []).map(esc).join(', ') || '—'}</td>`;
+const MASTERS = {
+  layers: {
+    coll: 'layers', tab: 'Layers / work items', add: 'Add layer', ph: 'Layer name',
+    intro: 'Layers and work items are shared by Annexure I and Annexure II. Any material can be used with any layer.',
+    text: r => r.name, sort: (a, b) => layerRank(a.name) - layerRank(b.name) || a.name.localeCompare(b.name),
+    usage: r => a1Rows().filter(x => eqi(x.layer, r.name)).length + a2Mats().filter(x => eqi(x.workItem, r.name)).length,
+    head: '<th>Layer / work item</th><th>Notes</th>',
+    cells: r => `<td class="cell-main">${esc(r.name)}</td><td class="cell-sub">${esc(r.notes || '')}</td>`,
+    label: r => r.name, form: r => layerForm(r)
+  },
+  materials: {
+    coll: 'materials', tab: 'Materials (Annexure I)', add: 'Add material', ph: 'Material name',
+    intro: 'Each material carries its compaction category and the IRC:SP:97 pass range. Bituminous materials use the 75 mm overlap rule; others use 1/3 roller width.',
+    text: r => r.name + ' ' + r.category, sort: (a, b) => a.name.localeCompare(b.name),
+    usage: r => a1Rows().filter(x => eqi(x.material, r.name)).length,
+    head: '<th>Material</th><th>Category</th><th class="num">Recommended passes</th><th>Recommended rollers</th>',
+    cells: r => `<td class="cell-main">${esc(r.name)}</td>${passCells(r)}`,
+    label: r => r.name, form: r => materialForm(r)
+  },
+  rules: {
+    coll: 'passRules', tab: 'Layer-specific rules', add: 'Add layer-specific rule', ph: 'Layer or material',
+    intro: 'Optional. Use a rule only when a material needs different passes on one layer, for example Gravel needs 3–5 passes by default but 4–8 on Subgrade. Without a rule, the material’s own values apply.',
+    text: r => r.layerName + ' ' + r.materialName, sort: (a, b) => layerRank(a.layerName) - layerRank(b.layerName) || a.layerName.localeCompare(b.layerName) || a.materialName.localeCompare(b.materialName),
+    usage: r => a1Rows().filter(x => x.masterId === r.id).length,
+    head: '<th>Layer</th><th>Material</th><th>Category</th><th class="num">Recommended passes</th><th>Recommended rollers</th>',
+    cells: r => `<td class="cell-main">${esc(r.layerName)}</td><td>${esc(r.materialName)}</td>${passCells(r)}`,
+    label: r => `${r.layerName}: ${r.materialName}`, form: r => ruleForm(r)
+  },
+  types: {
+    coll: 'materialTypes', tab: 'Materials (Annexure II)', add: 'Add material type', ph: 'Material type',
+    intro: 'Each material type carries its loose-to-compacted (L/C) factor, used to convert truck-delivered volume in Annexure II. Any material type can be used with any work item.',
+    text: r => r.name, sort: (a, b) => a.name.localeCompare(b.name),
+    usage: r => a2Mats().filter(x => eqi(x.materialType, r.name)).length,
+    head: '<th style="min-width:130px">Material type</th><th style="min-width:180px">Assumed category / layer</th><th class="num">Recommended L/C</th><th style="min-width:90px">Typical range</th><th style="min-width:200px">Basis / reference</th><th style="min-width:200px">Key assumption / notes</th>',
+    cells: r => `<td class="cell-main">${esc(r.name)}</td><td class="cell-sub">${esc(r.categoryLayer || '—')}</td><td class="num big-num">${r.lcFactor}</td><td>${esc(r.typicalRange || '—')}</td><td class="cell-sub">${esc(r.basis || '—')}</td><td class="cell-sub">${esc([r.assumption, r.notes].filter(Boolean).join(' ') || '—')}</td>`,
+    footer: () => LC_REFERENCE,
+    label: r => r.name, form: r => materialTypeForm(r)
+  }
+};
+function viewSettings(tab) {
+  if (!(tab in MASTERS) && tab !== 'display') tab = 'layers';
+  const M = MASTERS[tab];
+  const head = `<div class="top"><div><h1>Layers &amp; materials</h1><p class="sub">Master data used by report dropdowns. Saved reports keep the values that applied when they were entered.</p></div>
+    ${M && !S.readOnly ? `<button class="btn primary" id="add-master">${ICON.plus}${M.add}</button>` : ''}</div>
+    <div class="tabs" role="tablist">${Object.entries(MASTERS).map(([k, m]) => `<a href="#/settings/${k}" class="${tab === k ? 'on' : ''}">${m.tab}</a>`).join('')}<a href="#/settings/display" class="${tab === 'display' ? 'on' : ''}">Display and data</a></div>`;
+  if (tab === 'display') {
+    const p = prec();
+    page(head + `<div class="panel"><div class="panel-h"><h2>Display</h2></div><div class="panel-b"><div class="form-grid" style="max-width:520px">
+      <div class="fld"><label for="s-prec">Decimal places for calculated values</label><select class="txt" id="s-prec" ${S.readOnly ? 'disabled' : ''}>${[0, 1, 2, 3, 4].map(n => opt(n, String(n), p)).join('')}</select><span class="hint">Applies on screen and in exports. Calculations always use full precision.</span></div>
+      <div class="fld"><label>Example</label><div class="big-num" style="padding-top:6px">${fmt(5.333333)}</div></div></div></div></div>
+      <div class="panel"><div class="panel-h"><h2>Demo data</h2></div><div class="panel-b"><p class="sub" style="margin:0 0 12px">Data is ${S.mode === 'cloud' ? 'saved to shared storage for this page, so everyone it is shared with sees the same records' : 'saved in this browser only'}. Reset replaces every road, layer, material and report with the sample records from the two workbooks.</p>
+      ${S.readOnly ? '' : '<button class="btn danger" id="reset-data">Reset to sample data</button> <button class="btn ghost danger" id="clear-data">Delete all data</button>'}</div></div>`);
+    const sp = $('#s-prec'); if (sp) sp.onchange = async e => { try { await put('settings', { id: 'app', precision: Number(e.target.value) }); toast('Display precision updated'); viewSettings('display'); } catch (er) { toast(writeErr(er)); } };
+    const rb = $('#reset-data'); if (rb) rb.onclick = async () => { if (!(await confirmDlg({ title: 'Reset to sample data?', body: 'All current roads, layers, materials, rules and reports will be deleted and replaced with the sample records.', ok: 'Reset data', danger: true }))) return; rb.disabled = true; try { await wipeAll(); await loadSample(); toast('Sample data restored'); } catch (er) { toast(writeErr(er)); } viewSettings('display'); };
+    const cb = $('#clear-data'); if (cb) cb.onclick = async () => { if (!(await confirmDlg({ title: 'Delete all data?', body: 'Every road, layer, material, rule and report will be permanently deleted.', ok: 'Delete everything', danger: true }))) return; try { await wipeAll(); toast('All data deleted'); } catch (er) { toast(writeErr(er)); } viewSettings('display'); };
+    return;
+  }
+  page(head + `<p class="sub" style="margin:-4px 0 14px">${M.intro}</p><div class="panel"><div class="filters"><div class="fld grow"><label for="sq">Search</label><input class="txt" id="sq" value="${esc(setF.q)}" placeholder="${M.ph}"></div>
+    <label class="check" style="padding-bottom:8px"><input type="checkbox" id="sin" ${setF.inactive ? 'checked' : ''}> Show disabled entries</label></div><div id="m-list"></div></div>
+    <p class="hint">Disable an entry to remove it from new-report dropdowns while keeping it on reports that already use it. Entries can be deleted only when no report uses them.</p>${M.footer ? M.footer() : ''}`);
+  const draw = () => {
+    const q = setF.q.trim().toLowerCase();
+    const rows = all(M.coll).filter(r => (setF.inactive || r.active) && (!q || M.text(r).toLowerCase().includes(q))).sort(M.sort);
+    $('#m-list').innerHTML = rows.length ? `<div class="tbl-wrap"><table class="grid resp"><thead><tr>${M.head}<th class="num">In use</th><th>Status</th><th></th></tr></thead><tbody>
+      ${rows.map(r => { const u = M.usage(r); return `<tr>${M.cells(r)}<td class="num">${u}</td><td>${r.active ? '<span class="pill ok">Active</span>' : '<span class="pill arch">Disabled</span>'}<div class="cell-sub">v${r.version || 1}</div></td>
+        <td class="acts">${S.readOnly ? '' : `<button class="btn sm" data-m="edit" data-id="${r.id}">Edit</button><button class="btn sm ghost" data-m="toggle" data-id="${r.id}">${r.active ? 'Disable' : 'Enable'}</button><button class="btn sm ghost danger" data-m="del" data-id="${r.id}" ${u ? 'disabled title="Used by reports. Disable it instead."' : ''}>Delete</button>`}</td></tr>`; }).join('')}
+      </tbody></table></div>` : `<div class="empty"><h3>No entries${q ? ' match' : ''}</h3><p>${q ? 'Try a different search.' : 'Add entries so they appear in report dropdowns.'}</p></div>`;
+    $$('[data-m]').forEach(b => b.onclick = async () => {
+      const r = S.data[M.coll].get(b.dataset.id);
+      try {
+        if (b.dataset.m === 'edit') return M.form(r);
+        if (b.dataset.m === 'toggle') { const d = clone(r); d.active = !d.active; d.updatedAt = nowISO(); await put(M.coll, d); toast(d.active ? 'Entry enabled' : 'Entry disabled'); draw(); }
+        if (b.dataset.m === 'del') { if (await confirmDlg({ title: 'Delete entry?', body: `<b>${esc(M.label(r))}</b> will be permanently deleted.`, ok: 'Delete entry', danger: true })) { await remove(M.coll, r.id); toast('Entry deleted'); draw(); } }
+      } catch (e) { toast(writeErr(e)); }
+    });
+  };
+  draw();
+  $('#sq').oninput = e => { setF.q = e.target.value; draw(); };
+  $('#sin').onchange = e => { setF.inactive = e.target.checked; draw(); };
+  const add = $('#add-master'); if (add) add.onclick = () => M.form();
+}
+function formErrs(el, errs, keys) { keys.forEach(k => { const sp = el.querySelector(`[data-err="${k}"]`); if (sp) sp.textContent = errs[k] || ''; const ctl = el.querySelector('#f-' + k); if (ctl) ctl.classList.toggle('bad', !!errs[k]); }); return Object.keys(errs).length === 0; }
+function datalist(id, names) { return `<datalist id="${id}">${[...new Set(names)].map(l => `<option value="${esc(l)}">`).join('')}</datalist>`; }
+function passFields(d) {
+  return `<div class="fld"><label for="f-cat">Category<span class="req">*</span></label><select class="txt" id="f-cat">${opt('soil', 'Soil', d.category)}${opt('granular', 'Granular', d.category)}${opt('bituminous', 'Bituminous', d.category)}${opt('other', 'Other', d.category)}</select><span class="hint">Bituminous uses the 75 mm overlap rule; others use 1/3 roller width.</span></div>
+      <div class="fld"></div>
+      <div class="fld"><label for="f-min">Recommended passes, minimum<span class="req">*</span></label><input class="txt" id="f-min" inputmode="decimal" value="${esc(d.passMin)}">${errSpan('min')}</div>
+      <div class="fld"><label for="f-max">Recommended passes, maximum<span class="req">*</span></label><input class="txt" id="f-max" inputmode="decimal" value="${esc(d.passMax)}">${errSpan('max')}</div>
+      <div class="fld wide"><label for="f-rol">Recommended rollers, one per line</label><textarea class="txt" id="f-rol" rows="3">${esc((d.rollers || []).join('\n'))}</textarea></div>`;
+}
+function readPass(errs) {
+  const n = Calc.n, mn = n($('#f-min').value.trim()), mx = n($('#f-max').value.trim());
+  if (mn === null) errs.min = 'Required'; else if (!(mn > 0)) errs.min = Number.isNaN(mn) ? 'Enter a number' : 'Must be greater than 0';
+  if (mx === null) errs.max = 'Required'; else if (!(mx > 0)) errs.max = Number.isNaN(mx) ? 'Enter a number' : 'Must be greater than 0'; else if (mn > 0 && mx < mn) errs.max = 'Must be at least the minimum';
+  return { category: $('#f-cat').value, passMin: mn, passMax: mx, rollers: $('#f-rol').value.split('\n').map(x => x.trim()).filter(Boolean) };
+}
+function masterFooter(r, addLabel) { return `<div class="dlg-f"><button class="btn" data-cancel>Cancel</button><button class="btn primary" data-ok>${r ? 'Save changes' : addLabel}</button></div>`; }
+function layerForm(r, onSaved) {
+  const d = r ? clone(r) : { id: 'lay-' + uid(), name: '', notes: '', active: true, version: 0 };
+  const u = r ? MASTERS.layers.usage(r) : 0;
+  const el = openModal(`<div class="dlg-h"><h2>${r ? 'Edit layer' : 'Add new layer'}</h2>${onSaved ? '<p class="sub">It will be added to the layer dropdown in both Annexure I and Annexure II.</p>' : ''}${u ? `<p class="sub">Used on ${u} report row${u === 1 ? '' : 's'}. Those reports keep the name they were saved with.</p>` : ''}</div>
+    <div class="dlg-b"><div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="fld wide"><label for="f-name">Layer name<span class="req">*</span></label><input class="txt" id="f-name" value="${esc(d.name)}" placeholder="e.g. Shoulder, Capping layer">${errSpan('name')}</div>
+      <div class="fld wide"><label for="f-notes">Notes</label><input class="txt" id="f-notes" value="${esc(d.notes || '')}"></div>
+      <div class="fld"><label class="check"><input type="checkbox" id="f-act" ${d.active ? 'checked' : ''}> Active in dropdowns</label></div>
+    </div></div>${masterFooter(r, 'Add layer')}`);
+  el.querySelector('[data-cancel]').onclick = closeModal;
+  el.querySelector('[data-ok]').onclick = async () => {
+    const name = $('#f-name').value.trim(), errs = {};
+    if (!name) errs.name = 'Enter the layer name';
+    else if (all('layers').some(x => x.id !== d.id && eqi(x.name, name))) errs.name = 'This layer already exists';
+    if (!formErrs(el, errs, ['name'])) return;
+    const t = nowISO();
+    Object.assign(d, { name, notes: $('#f-notes').value.trim(), active: $('#f-act').checked, version: (d.version || 0) + 1, updatedAt: t });
+    if (!r) d.createdAt = t;
+    try { await put('layers', d); closeModal(); toast(r ? 'Layer updated' : 'Layer added'); onSaved ? onSaved(d) : viewSettings('layers'); } catch (e) { toast(writeErr(e)); }
+  };
+}
+function materialForm(r, onSaved) {
+  const d = r ? clone(r) : { id: 'mat-' + uid(), name: '', category: 'soil', passMin: '', passMax: '', rollers: [], active: true, version: 0, notes: '' };
+  const u = r ? MASTERS.materials.usage(r) : 0;
+  const el = openModal(`<div class="dlg-h"><h2>${r ? 'Edit material' : 'Add new material'}</h2>${onSaved ? '<p class="sub">It will be added to the material dropdown for every report.</p>' : ''}${u ? `<p class="sub">Used on ${u} report row${u === 1 ? '' : 's'}. Saved reports keep their values; drafts can apply the update.</p>` : ''}</div>
+    <div class="dlg-b"><div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="fld wide"><label for="f-name">Material name<span class="req">*</span></label><input class="txt" id="f-name" value="${esc(d.name)}" placeholder="e.g. Fly Ash, DBM">${errSpan('name')}</div>
+      ${passFields(d)}
+      <div class="fld"></div>
+      <div class="fld" style="justify-content:flex-end"><label class="check"><input type="checkbox" id="f-act" ${d.active ? 'checked' : ''}> Active in dropdowns</label></div>
+      <div class="fld wide"><label for="f-notes">Notes</label><input class="txt" id="f-notes" value="${esc(d.notes || '')}"></div>
+    </div></div>${masterFooter(r, 'Add material')}`);
+  el.querySelector('[data-cancel]').onclick = closeModal;
+  el.querySelector('[data-ok]').onclick = async () => {
+    const name = $('#f-name').value.trim(), errs = {};
+    if (!name) errs.name = 'Enter the material name';
+    else if (all('materials').some(x => x.id !== d.id && eqi(x.name, name))) errs.name = 'This material already exists';
+    const pass = readPass(errs);
+    if (!formErrs(el, errs, ['name', 'min', 'max'])) return;
+    const t = nowISO();
+    Object.assign(d, pass, { name, active: $('#f-act').checked, notes: $('#f-notes').value.trim(), version: (d.version || 0) + 1, updatedAt: t });
+    if (!r) d.createdAt = t;
+    try { await put('materials', d); closeModal(); toast(r ? 'Material updated' : 'Material added'); onSaved ? onSaved(d) : viewSettings('materials'); } catch (e) { toast(writeErr(e)); }
+  };
+}
+function ruleForm(r) {
+  const d = r ? clone(r) : { id: 'pr-' + uid(), layerName: '', materialName: '', category: 'soil', passMin: '', passMax: '', rollers: [], active: true, version: 0, notes: '' };
+  const u = r ? MASTERS.rules.usage(r) : 0;
+  const el = openModal(`<div class="dlg-h"><h2>${r ? 'Edit layer-specific rule' : 'Add layer-specific rule'}</h2><p class="sub">These values replace the material’s own pass range when it is used on this layer.${u ? ` Used on ${u} report row${u === 1 ? '' : 's'}.` : ''}</p></div>
+    <div class="dlg-b"><div class="form-grid" style="grid-template-columns:1fr 1fr">${datalist('dl-layers', all('layers').map(x => x.name))}${datalist('dl-mats', all('materials').map(x => x.name))}
+      <div class="fld"><label for="f-layer">Layer<span class="req">*</span></label><input class="txt" id="f-layer" list="dl-layers" value="${esc(d.layerName)}" placeholder="e.g. Subgrade">${errSpan('layer')}</div>
+      <div class="fld"><label for="f-mat">Material<span class="req">*</span></label><input class="txt" id="f-mat" list="dl-mats" value="${esc(d.materialName)}" placeholder="e.g. Gravel">${errSpan('mat')}</div>
+      ${passFields(d)}
+      <div class="fld"></div>
+      <div class="fld" style="justify-content:flex-end"><label class="check"><input type="checkbox" id="f-act" ${d.active ? 'checked' : ''}> Active</label></div>
+      <div class="fld wide"><label for="f-notes">Notes</label><input class="txt" id="f-notes" value="${esc(d.notes || '')}"></div>
+    </div></div>${masterFooter(r, 'Add rule')}`);
+  el.querySelector('[data-cancel]').onclick = closeModal;
+  el.querySelector('[data-ok]').onclick = async () => {
+    const layer = $('#f-layer').value.trim(), mat = $('#f-mat').value.trim(), errs = {};
+    if (!layer) errs.layer = 'Enter the layer';
+    if (!mat) errs.mat = 'Enter the material';
+    if (layer && mat && all('passRules').some(x => x.id !== d.id && eqi(x.layerName, layer) && eqi(x.materialName, mat))) errs.mat = 'A rule for this layer and material already exists';
+    const pass = readPass(errs);
+    if (!formErrs(el, errs, ['layer', 'mat', 'min', 'max'])) return;
+    const t = nowISO();
+    Object.assign(d, pass, { layerName: layer, materialName: mat, active: $('#f-act').checked, notes: $('#f-notes').value.trim(), version: (d.version || 0) + 1, updatedAt: t });
+    if (!r) d.createdAt = t;
+    try {
+      await put('passRules', d);
+      /* make sure the layer and material exist in their own lists too */
+      if (!all('layers').some(x => eqi(x.name, layer))) await put('layers', { id: 'lay-' + uid(), name: layer, notes: '', active: true, version: 1, createdAt: t, updatedAt: t });
+      if (!all('materials').some(x => eqi(x.name, mat))) await put('materials', Object.assign({ id: 'mat-' + uid(), name: mat, active: true, version: 1, notes: '', createdAt: t, updatedAt: t }, pass));
+      closeModal(); toast(r ? 'Rule updated' : 'Rule added'); viewSettings('rules');
+    } catch (e) { toast(writeErr(e)); }
+  };
+}
+function materialTypeForm(r, onSaved) {
+  const d = r ? clone(r) : { id: 'mt-' + uid(), name: '', categoryLayer: '', lcFactor: '', typicalRange: '', basis: '', assumption: '', unit: 'm3', active: true, version: 0, notes: '' };
+  const u = r ? MASTERS.types.usage(r) : 0;
+  const el = openModal(`<div class="dlg-h"><h2>${r ? 'Edit material type' : 'Add new material type'}</h2>${onSaved ? '<p class="sub">It will be added to the material type dropdown for every report.</p>' : ''}${u ? `<p class="sub">Used on ${u} report material${u === 1 ? '' : 's'}. Those reports keep their saved factor; drafts can reset to the new value.</p>` : ''}</div>
+    <div class="dlg-b"><div class="form-grid" style="grid-template-columns:1fr 1fr">
+      <div class="fld"><label for="f-name">Material type<span class="req">*</span></label><input class="txt" id="f-name" value="${esc(d.name)}" placeholder="e.g. Murrum, Stone dust">${errSpan('name')}</div>
+      <div class="fld"><label for="f-cl">Assumed category / layer</label><input class="txt" id="f-cl" value="${esc(d.categoryLayer || '')}" placeholder="e.g. GSB aggregate"></div>
+      <div class="fld"><label for="f-lc">Recommended L/C factor<span class="req">*</span></label><input class="txt" id="f-lc" inputmode="decimal" value="${esc(d.lcFactor)}">${errSpan('lc')}<span class="hint">Loose volume ÷ compacted volume</span></div>
+      <div class="fld"><label for="f-rng">Typical range</label><input class="txt" id="f-rng" value="${esc(d.typicalRange || '')}" placeholder="e.g. 1.20 - 1.35"></div>
+      <div class="fld wide"><label for="f-basis">Basis / reference</label><input class="txt" id="f-basis" value="${esc(d.basis || '')}" placeholder="e.g. MoRTH Sec 401; IRC:SP:72-2015"></div>
+      <div class="fld wide"><label for="f-asm">Key assumption</label><textarea class="txt" id="f-asm" rows="2">${esc(d.assumption || '')}</textarea></div>
+      <div class="fld"></div>
+      <div class="fld" style="justify-content:flex-end"><label class="check"><input type="checkbox" id="f-act" ${d.active ? 'checked' : ''}> Active in dropdowns</label></div>
+      <div class="fld wide"><label for="f-notes">Notes</label><input class="txt" id="f-notes" value="${esc(d.notes || '')}"></div>
+    </div></div>${masterFooter(r, 'Add material type')}`);
+  el.querySelector('[data-cancel]').onclick = closeModal;
+  el.querySelector('[data-ok]').onclick = async () => {
+    const v = id => $('#f-' + id).value.trim();
+    const errs = {}, lc = Calc.n(v('lc')), name = v('name');
+    if (!name) errs.name = 'Enter the material type';
+    else if (all('materialTypes').some(x => x.id !== d.id && eqi(x.name, name))) errs.name = 'This material type already exists';
+    if (lc === null) errs.lc = 'Required'; else if (!(lc > 0)) errs.lc = Number.isNaN(lc) ? 'Enter a number' : 'Must be greater than 0';
+    if (!formErrs(el, errs, ['name', 'lc'])) return;
+    const t = nowISO();
+    Object.assign(d, { name, categoryLayer: v('cl'), lcFactor: lc, typicalRange: v('rng'), basis: v('basis'), assumption: v('asm'), active: $('#f-act').checked, notes: v('notes'), version: (d.version || 0) + 1, updatedAt: t });
+    if (!r) d.createdAt = t;
+    try { await put('materialTypes', d); closeModal(); toast(r ? 'Material type updated' : 'Material type added'); onSaved ? onSaved(d) : viewSettings('types'); } catch (e) { toast(writeErr(e)); }
+  };
+}
+const LC_REFERENCE = `<div class="panel"><div class="panel-h"><h2>L/C basis, assumptions and references</h2><p class="sub">From the “LC Factors, Notes and reference” sheet of the Annexure II workbook</p></div><div class="panel-b formula">
+  <p style="margin:0 0 10px">Compaction is carried out to achieve specified MDD; loose (transported) volume is always greater than compacted (placed) volume. <b>L/C factor = Loose volume ÷ Compacted volume.</b> Loose quantity required = Compacted quantity × L/C factor.</p>
+  <h3 style="margin:14px 0 6px">Assumptions and limitations</h3>
+  1. Soil type for “Earth Work” is not specified in the source data; the “ordinary soil” factor (1.20) is applied as a default. Replace with the soil-specific factor once the borrow-area soil classification (IS 1498) is known.<br>
+  2. “Aggregate (Chips)” and “Aggregate (CMetal)” are assumed to be WMM and GSB aggregate respectively, based on common PMGSY BOQ naming convention. Confirm the actual pavement-layer assignment against the project DPR/BOQ before relying on these factors.<br>
+  3. Recommended factors are typical/average values drawn from published literature and common site practice. Actual values vary with moisture content, gradation, compactive effort and roller type, and can deviate materially from the ranges shown (published earthwork guidance cites variation on the order of ±15% to ±33% around typical values).<br>
+  4. For contractual or payment-critical quantities, factors should be verified by field trial: compare the loose bulk/rodded density of the delivered material (IS 2386 Part 3, or a field unit-weight box test) against the laboratory Maximum Dry Density for that specific source (IS 2720 Part 7 Standard Proctor, or Part 8 Modified Proctor).<br>
+  5. “No. of Trips” assumes the GPS-VTS distance covered is a round-trip (to-and-fro) reading, hence division by (2 × Lead Distance). If the GPS system logs one-way distance only, remove the factor of 2 from the formula.<br>
+  6. This calculation converts delivered loose volume to a compacted-equivalent volume for a desk-based accuracy check against the Material Master quantities. It does not itself certify field compaction; density of the placed layer must still be verified independently via field density tests (sand-replacement, core-cutter, or nuclear gauge) against the laboratory MDD.
+  <h3 style="margin:14px 0 6px">References</h3>
+  1. IS 1200 (Part 1):2000, Method of Measurement of Building and Civil Engineering Works: Earthwork.<br>
+  2. IRC:36-2010, Recommended Practice for Construction of Earth Embankments for Road Works.<br>
+  3. MoRTH Specifications for Road and Bridge Works, 5th Revision: Section 300 (Earthwork), Section 401 (GSB), Section 406 (WMM).<br>
+  4. IRC:SP:72-2015, Guidelines for the Design of Flexible Pavements for Low Volume Rural Roads.<br>
+  5. IS 2720 (Part 7):1980 and (Part 8):1983, Determination of Water Content-Dry Density Relation (Standard and Modified Proctor).<br>
+  6. IS 2386 (Part 3):1963, Methods of Test for Aggregates for Concrete: Bulk Density, Voids and Bulking (bulking of sand is distinct from the L/C fill factor used here).<br>
+  7. IRC:91 / IRC SP:100, guidance for embankments in black-cotton / expansive soil.<br>
+  8. Caterpillar Performance Handbook, typical soil swell/shrinkage factor tables.<br>
+  9. Worked compaction-factor examples (MDD ÷ loose bulk density method) for GSB, WMM and DBM, consistent with MoRTH/IRC/IS practice.<br>
+  10. IRC:SP:97-2013, Guidelines on Compaction Equipment for Road Works.
+</div></div>`;
+
+/* ---------------- Excel export (same calculation service) ---------------- */
+let dlPromise = null;
+function getDownloads() { if (!dlPromise) dlPromise = (window.claude && window.claude.use) ? window.claude.use('downloads').catch(() => null) : Promise.resolve(null); return dlPromise; }
+async function saveFile(name, buf) {
+  const dl = await getDownloads();
+  if (dl) {
+    try { await dl.save({ filename: name, data: new Blob([buf]) }); toast('Exported to Excel'); }
+    catch (e) { if (e && e.code === 'declined') return; if (e && e.code === 'rate_limited') { toast('A save prompt is already open'); return; } toast('Could not export the file here'); }
+    return;
+  }
+  try {
+    const url = URL.createObjectURL(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000); toast('Exported to Excel');
+  } catch (e) { toast('Could not export the file here'); }
+}
+function sheet(aoa, widths, numFmtCols) {
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols'] = widths.map(w => ({ wch: w }));
+  const z = '0.' + '0'.repeat(Math.max(prec(), 1));
+  Object.keys(ws).forEach(k => { if (k[0] === '!') return; const c = ws[k]; if (c.t === 'n' && !Number.isInteger(c.v)) c.z = z; });
+  return ws;
+}
+const nOrBlank = v => { const x = Calc.n(v); return x === null || Number.isNaN(x) ? '' : x; };
+const fileSafe = s => String(s || 'report').replace(/[^\w\-]+/g, '_').slice(0, 60);
+function metaSheet(d, title) {
+  const rd = road(d.roadId) || {};
+  return sheet([[title], [], ['Road name', rd.roadName || ''], ['Package no.', rd.packageNo || ''], ['PIU / site', rd.piu || ''], ['Status', d.status === 'FINALIZED' ? 'Finalized' : 'Draft'], ['Remarks', d.remarks || '']], [22, 60]);
+}
+async function exportA1(d) {
+  if (typeof XLSX === 'undefined') return toast('The Excel library did not load. Check your connection and reload.');
+  const rd = road(d.roadId) || {}, c = Calc.a1(d), chain = `${fmtPlain(d.chainageStart)}-${fmtPlain(d.chainageEnd)}`;
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet([
+    ['Format for input for various particulars of Road by PIU'], ['Road Name', rd.roadName || ''], ['Package No.', rd.packageNo || ''], ['Chainage', chain, 'm'], ['Segment', nOrBlank(d.segmentLength), 'm'],
+    ['GPS-VTS BASED DETERMINATION OF NUMBER OF ROLLER PASSES'], [], ['Layer', 'Material', 'Layer Width (m)'], ...d.rows.map(r => [r.layer, r.material, nOrBlank(r.layerWidth)])
+  ], [24, 30, 16]), 'Input');
+  XLSX.utils.book_append_sheet(wb, sheet([
+    ['GPS-VTS BASED DETERMINATION OF NUMBER OF ROLLER PASSES'],
+    ['Layer', 'Material', 'Layer Width (m)', 'Roller Width as per GPS/VTS data (m)', 'No. of Roller Trips Required for Width Coverage', 'Recommended Roller', 'Type of Roller (as per VTS Data)', 'Distance Covered as per VTS Data (m)', 'Effective Passes = VTS Distance Covered ÷ (Length of Segment × Width Coverage Trips/Cycle)', 'Recommended No. of Passes as per IRC: SP 97', 'Recommended average no of Passes', 'Compaction Category'],
+    ...d.rows.map((r, i) => { const rc = c.rows[i]; return [r.layer, r.material, nOrBlank(r.layerWidth), nOrBlank(r.rollerWidth), rc.trips ?? 'Pending input', (r.rollers || []).join(', '), r.rollerTypeVts || '', nOrBlank(r.vtsDistance), rc.eff ?? 'Pending input', r.passMin !== '' && r.passMin != null ? `${r.passMin}-${r.passMax}` : '', rc.avg ?? '', rc.status || 'Pending input']; }),
+    [], ['Note:'],
+    ['1. Roller overlap requirements have been considered as per IRC:SP:97-2013, with 1/3rd of roller width for granular/soil layers and a minimum 75 mm overlap for bituminous layers.'],
+    ['2. The recommended number of roller passes has been considered as per IRC:SP:97-2013.'],
+    ['3. If the effective number of passes is less than the recommended average number of passes, the result is Unsatisfactory; otherwise Satisfactory.']
+  ], [16, 24, 12, 16, 16, 34, 22, 16, 22, 16, 14, 18]), 'GPS-VTS Internal Calculations');
+  XLSX.utils.book_append_sheet(wb, sheet([
+    ['Output based on VTS data'], ['Road Name', rd.roadName || ''], ['Package No.', rd.packageNo || ''], ['Chainage', chain, 'm'], ['SUMMARY — COMPACTION CATEGORY BY LAYER'],
+    ['Layer', 'Materials', 'Compaction Category'], ...d.rows.map((r, i) => [r.layer, r.material, c.rows[i].status || 'Pending input'])
+  ], [24, 30, 22]), 'Output');
+  XLSX.utils.book_append_sheet(wb, metaSheet(d, 'Annexure I report information'), 'Report info');
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  await saveFile(`Annexure_I_${fileSafe(rd.packageNo)}_${fileSafe(chain)}.xlsx`, buf);
+}
+async function exportA2(d) {
+  if (typeof XLSX === 'undefined') return toast('The Excel library did not load. Check your connection and reload.');
+  const rd = road(d.roadId) || {}, c = Calc.a2(d);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet([
+    ['Format for input for various particulars of Road by PIU'],
+    ['Sr. No.', 'Material', 'Source', 'Lead Distance (km)', 'Unit', 'Quantity (Compacted, m3)', 'Material Type', 'L/C Factor', 'Loose Qty Required (m3)'],
+    ...d.materials.map((m, i) => [i + 1, m.workItem, m.source, nOrBlank(m.leadKm), m.unit || 'm3', nOrBlank(m.dprQty), m.materialType, nOrBlank(m.lcFactor), c.mats[i].loose ?? ''])
+  ], [8, 26, 10, 16, 8, 20, 20, 12, 20]), 'Input');
+  const calc = [['GPS Vehicle Tracking System (VTS) - Material Verification']];
+  d.materials.forEach((m, i) => {
+    const mc = c.mats[i];
+    calc.push([], [i + 1, m.workItem], ['', m.materialType], ['', 'Truck', 'Capacity (m3)', 'Truck Filling Factor', 'L/C Factor', 'Distance Covered as per GPS VTS (km)', 'No. of Trips Generated (= Distance Covered / (2 x Lead Distance))', 'Material Brought to Site - Compacted-Equivalent (m3)']);
+    m.trucks.forEach((t, j) => { const tc = mc.trucks[j]; calc.push(['', t.name, nOrBlank(t.capacity), nOrBlank(t.fill), nOrBlank(m.lcFactor), nOrBlank(t.distanceKm), tc.trips ?? 'Pending input', tc.qty ?? 'Pending input']); });
+    calc.push(['', '', '', '', '', '', 'Total', mc.total ?? ''], ['', '', '', '', '', '', '% Implementation', mc.pct === null ? '' : mc.pct / 100]);
+  });
+  calc.push([], ['Note: The truck filling factor may vary as per site conditions and actual carrying capacity, particularly in hilly terrain. It shall be considered as approved by the concerned Engineer/SRRDA.']);
+  const ws2 = sheet(calc, [6, 14, 14, 14, 10, 20, 26, 26]);
+  Object.keys(ws2).forEach(k => { if (k[0] !== '!' && ws2[k].t === 's' && ws2[k].v === '% Implementation') { const cell = XLSX.utils.encode_cell({ r: XLSX.utils.decode_cell(k).r, c: 7 }); if (ws2[cell] && ws2[cell].t === 'n') ws2[cell].z = '0.00%'; } });
+  XLSX.utils.book_append_sheet(wb, ws2, 'GPS VTS internal calculation');
+  const out = sheet([['Output based on VTS data'], ['', 'Material', 'Quantity as per DPR (m3)', 'Quantity as per GPS - VTS analysis (m3)', '% Implementation'],
+    ...d.materials.map((m, i) => ['', `${m.workItem}${m.materialType ? ' (' + m.materialType + ')' : ''}`, nOrBlank(m.dprQty), c.mats[i].total ?? '', c.mats[i].pct === null ? '' : c.mats[i].pct / 100])], [4, 34, 22, 30, 18]);
+  d.materials.forEach((m, i) => { const cell = out[XLSX.utils.encode_cell({ r: 2 + i, c: 4 })]; if (cell && cell.t === 'n') cell.z = '0.00%'; });
+  XLSX.utils.book_append_sheet(wb, out, 'Output');
+  XLSX.utils.book_append_sheet(wb, metaSheet(d, 'Annexure II report information'), 'Report info');
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' });
+  await saveFile(`Annexure_II_${fileSafe(rd.packageNo)}.xlsx`, buf);
+}
+
+/* ---------------- user-resizable table columns ---------------- */
+const COLW_KEY = 'gpsvts-colw';
+let colW = {}; try { colW = JSON.parse(localStorage.getItem(COLW_KEY) || '{}') || {}; } catch (e) { }
+function tableKey(t, idx) { const p = parseRoute(); return (p[0] || 'dash') + (p[1] ? (p[0] === 'settings' ? '-' + p[1] : '-edit') : '') + ':' + (t.id || t.className.replace(/\s+/g, '.')) + ':' + idx; }
+function labelRespTables() {
+  $$('table.grid.resp', main()).forEach(t => {
+    if (t.dataset.lb === String(t.tBodies[0] ? t.tBodies[0].rows.length : 0)) return;
+    const hr = t.tHead.rows[t.tHead.rows.length - 1];
+    const labels = Array.from(hr.cells).map(th => (th.childNodes.length ? Array.from(th.childNodes).filter(n => !(n.classList && n.classList.contains('col-rz'))).map(n => n.textContent).join('') : '').trim());
+    Array.from(t.tBodies[0] ? t.tBodies[0].rows : []).forEach(tr => Array.from(tr.cells).forEach((td, i) => { if (!td.hasAttribute('data-label')) td.setAttribute('data-label', labels[i] || ''); }));
+    t.dataset.lb = String(t.tBodies[0] ? t.tBodies[0].rows.length : 0);
+  });
+}
+function enableColResize() {
+  labelRespTables();
+  $$('table.grid', main()).forEach((t, ti) => {
+    if (t.dataset.rz) return; t.dataset.rz = '1';
+    const key = tableKey(t, ti);
+    const hr = t.tHead.rows[t.tHead.rows.length - 1];
+    Array.from(hr.cells).forEach((th, ci) => {
+      const w = colW[key + ':' + ci]; if (w) { th.style.width = th.style.minWidth = w + 'px'; }
+      if (ci === hr.cells.length - 1 && !th.textContent.trim()) return;
+      const h = document.createElement('span'); h.className = 'col-rz no-print'; h.title = 'Drag to resize column. Double-click to reset.';
+      th.appendChild(h);
+      h.addEventListener('pointerdown', e => {
+        e.preventDefault(); e.stopPropagation();
+        const startX = e.clientX, startW = th.getBoundingClientRect().width;
+        h.setPointerCapture(e.pointerId); h.classList.add('on'); document.body.classList.add('resizing');
+        const move = ev => { const nw = Math.max(40, Math.round(startW + ev.clientX - startX)); th.style.width = th.style.minWidth = nw + 'px'; };
+        const up = () => { h.removeEventListener('pointermove', move); h.removeEventListener('pointerup', up); h.classList.remove('on'); document.body.classList.remove('resizing');
+          colW[key + ':' + ci] = Math.round(th.getBoundingClientRect().width); try { localStorage.setItem(COLW_KEY, JSON.stringify(colW)); } catch (er) { } };
+        h.addEventListener('pointermove', move); h.addEventListener('pointerup', up);
+      });
+      h.addEventListener('click', e => e.stopPropagation());
+      h.addEventListener('dblclick', e => { e.stopPropagation(); th.style.width = th.style.minWidth = ''; delete colW[key + ':' + ci]; try { localStorage.setItem(COLW_KEY, JSON.stringify(colW)); } catch (er) { } });
+    });
+  });
+}
+new MutationObserver(() => requestAnimationFrame(enableColResize)).observe(document.getElementById('main'), { childList: true, subtree: true });
+
+/* ---------------- sidebar collapse (per-viewer preference) ---------------- */
+(function () {
+  const app = $('.app'), btn = $('#rail-btn');
+  const set = on => { app.classList.toggle('rail', on); btn.setAttribute('aria-expanded', String(!on)); btn.title = on ? 'Expand menu' : 'Collapse menu'; btn.querySelector('.t').textContent = on ? 'Expand menu' : 'Collapse menu'; };
+  let on = false; try { on = localStorage.getItem('gpsvts-rail') === '1'; } catch (e) { }
+  set(on);
+  btn.onclick = () => { on = !app.classList.contains('rail'); set(on); try { localStorage.setItem('gpsvts-rail', on ? '1' : '0'); } catch (e) { } };
+})();
+
+/* ---------------- PWA: register service worker when self-hosted ---------------- */
+try {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) && !/(^|\.)claude\.(ai|site)$|claudeusercontent/.test(location.hostname) && document.querySelector('link[rel="manifest"][href="manifest.webmanifest"]')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => { }));
+  }
+} catch (e) { }
+
+/* ---------------- start ---------------- */
+async function init() {
+  let db = null;
+  try { db = (window.claude && typeof window.claude.use === 'function') ? await window.claude.use('db') : null; } catch (e) { db = null; }
+  if (db) {
+    S.db = db; S.mode = 'cloud';
+    try { const user = await window.claude.use('user'); if (user) { const w = await user.can('data.write'); if (w === false) S.readOnly = true; } } catch (e) { }
+    await new Promise(resolve => {
+      let pending = COLLS.length, done = false;
+      const fin = () => { if (!done) { done = true; resolve(); } };
+      COLLS.forEach(c => {
+        let first = true;
+        db.collection(c).onSnapshot(snap => {
+          S.data[c] = new Map(snap.docs.map(d => [d.id, d.data()]));
+          if (first) { first = false; if (--pending === 0) fin(); } else if (S.ready) onRemoteChange();
+        }, err => { console.warn('db', c, err && err.code); if (first) { first = false; if (--pending === 0) fin(); } });
+      });
+      setTimeout(fin, 9000);
+    });
+  } else { S.mode = 'local'; loadLocal(); }
+  S.ready = true; updateMode(); route();
+}
+init();
+</script>
+</body>
+</html>
